@@ -45,6 +45,7 @@ export const mockRules: CPRule[] = [
     id: "rule_1",
     name: "Summer Sale",
     status: "enabled",
+    priority: 0,
     productCondition: {
       type: "TAGS",
       tags: ["summer"],
@@ -60,6 +61,7 @@ export const mockRules: CPRule[] = [
     id: "rule_2",
     name: "Premium Items Fixed Price",
     status: "disabled",
+    priority: 1,
     productCondition: {
       type: "TAGS",
       tags: ["premium"],

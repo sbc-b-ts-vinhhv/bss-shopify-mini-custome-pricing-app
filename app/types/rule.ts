@@ -19,9 +19,13 @@ export interface CPRule {
   id: string;
   name: string;
   status: RuleStatus;
+  priority: number;
+
   productCondition: ProductCondition;
   discount: DiscountConfig;
+
   createdAt: string;
+  endAt?: string | null;
   updatedAt: string;
 }
 

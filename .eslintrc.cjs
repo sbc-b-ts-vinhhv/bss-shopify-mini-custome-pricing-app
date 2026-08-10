@@ -50,6 +50,7 @@ module.exports = {
       },
       rules: {
         "react/no-unknown-property": ["error", { ignore: ["variant"] }],
+        "no-unused-vars": "off",
       },
     },
 
@@ -74,6 +75,10 @@ module.exports = {
         "plugin:import/recommended",
         "plugin:import/typescript",
       ],
+      rules: {
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+      },
     },
 
     // Node

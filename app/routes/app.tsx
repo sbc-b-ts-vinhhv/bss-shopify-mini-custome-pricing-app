@@ -24,18 +24,7 @@ export default function App() {
 
   return (
     <AppProvider embedded apiKey={apiKey}>
-      <Frame
-        navigation={
-          <Navigation location={pathname}>
-            <Navigation.Section
-              items={[
-                { label: "Home", url: "/app" },
-                { label: "Additional page", url: "/app/additional" },
-              ]}
-            />
-          </Navigation>
-        }
-      >
+      <Frame>
         <Outlet />
       </Frame>
     </AppProvider>
