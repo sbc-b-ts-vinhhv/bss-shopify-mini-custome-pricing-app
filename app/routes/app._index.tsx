@@ -6,13 +6,24 @@ import type {
 } from "react-router";
 import { useFetcher } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
+import {
+  BlockStack,
+  Box,
+  Button,
+  Card,
+  InlineStack,
+  Layout,
+  Link,
+  List,
+  Page,
+  Text,
+} from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import prisma from "app/db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-
 
   const responseAdmin = await admin.graphql(`
   query {
@@ -191,190 +202,186 @@ export default function Index() {
   const generateProduct = () => fetcher.submit({}, { method: "POST" });
 
   return (
-    <s-page heading="Shopify app template">
-      <s-button slot="primary-action" onClick={generateProduct}>
-        Generate a product
-      </s-button>
+    <Page
+      title="Shopify app template"
+      primaryAction={{
+        content: "Generate a product",
+        onAction: generateProduct,
+        loading: isLoading,
+      }}
+    >
+      <Layout>
+        <Layout.Section>
+          <BlockStack gap="400">
+            <Card>
+              <Text as="h2" variant="headingMd">
+                Hello World
+              </Text>
+              <Text as="p">Day la app cua taoooo</Text>
+            </Card>
+            <Card>
+              <BlockStack gap="400">
+                <Text as="h2" variant="headingMd">
+                  Get started with products
+                </Text>
+                <Text as="p">
+                  Generate a product with GraphQL and get the JSON output for
+                  that product. Learn more about the{" "}
+                  <Link
+                    url="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
+                    target="_blank"
+                  >
+                    productCreate
+                  </Link>{" "}
+                  mutation in our API references. Includes a product{" "}
+                  <Link
+                    url="https://shopify.dev/docs/apps/build/custom-data/metafields"
+                    target="_blank"
+                  >
+                    metafield
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    url="https://shopify.dev/docs/apps/build/custom-data/metaobjects"
+                    target="_blank"
+                  >
+                    metaobject
+                  </Link>
+                  .
+                </Text>
+                <InlineStack gap="200">
+                  <Button onClick={generateProduct} loading={isLoading}>
+                    Generate a product
+                  </Button>
+                  {fetcher.data?.product && (
+                    <Button
+                      onClick={() => {
+                        shopify.intents.invoke?.("edit:shopify/Product", {
+                          value: fetcher.data?.product?.id,
+                        });
+                      }}
+                      variant="tertiary"
+                    >
+                      Edit product
+                    </Button>
+                  )}
+                </InlineStack>
+                {fetcher.data?.product && (
+                  <BlockStack gap="300">
+                    <Text as="h3" variant="headingSm">
+                      productCreate mutation
+                    </Text>
+                    <JsonOutput value={fetcher.data.product} />
+                    <Text as="h3" variant="headingSm">
+                      productVariantsBulkUpdate mutation
+                    </Text>
+                    <JsonOutput value={fetcher.data.variant} />
+                    <Text as="h3" variant="headingSm">
+                      metaobjectUpsert mutation
+                    </Text>
+                    <JsonOutput value={fetcher.data.metaobject} />
+                  </BlockStack>
+                )}
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+        <Layout.Section variant="oneThird">
+          <BlockStack gap="400">
+            <Card>
+              <BlockStack gap="200">
+                <Text as="h2" variant="headingMd">
+                  App template specs
+                </Text>
+                <Text as="p">
+                  Framework:{" "}
+                  <Link url="https://reactrouter.com/" target="_blank">
+                    React Router
+                  </Link>
+                </Text>
+                <Text as="p">
+                  Interface:{" "}
+                  <Link url="https://polaris.shopify.com/" target="_blank">
+                    Polaris React
+                  </Link>
+                </Text>
+                <Text as="p">
+                  API:{" "}
+                  <Link
+                    url="https://shopify.dev/docs/api/admin-graphql"
+                    target="_blank"
+                  >
+                    GraphQL
+                  </Link>
+                </Text>
+                <Text as="p">
+                  Custom data:{" "}
+                  <Link
+                    url="https://shopify.dev/docs/apps/build/custom-data"
+                    target="_blank"
+                  >
+                    Metafields &amp; metaobjects
+                  </Link>
+                </Text>
+                <Text as="p">
+                  Database:{" "}
+                  <Link url="https://www.prisma.io/" target="_blank">
+                    Prisma
+                  </Link>
+                </Text>
+              </BlockStack>
+            </Card>
+            <Card>
+              <Text as="h2" variant="headingMd">
+                Next steps
+              </Text>
+              <List>
+                <List.Item>
+                  Build an{" "}
+                  <Link
+                    url="https://shopify.dev/docs/apps/getting-started/build-app-example"
+                    target="_blank"
+                  >
+                    example app
+                  </Link>
+                </List.Item>
+                <List.Item>
+                  Explore Shopify&apos;s API with{" "}
+                  <Link
+                    url="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
+                    target="_blank"
+                  >
+                    GraphiQL
+                  </Link>
+                </List.Item>
+              </List>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+      </Layout>
+    </Page>
+  );
+}
 
-      <s-section heading="Hello World">
-        <s-paragraph>
-          Day la app cua taoooo
-        </s-paragraph>
-      </s-section>
-      <s-section heading="Get started with products">
-        <s-paragraph>
-          Generate a product with GraphQL and get the JSON output for that
-          product. Learn more about the{" "}
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-            target="_blank"
-          >
-            productCreate
-          </s-link>{" "}
-          mutation in our API references. Includes a product{" "}
-          <s-link
-            href="https://shopify.dev/docs/apps/build/custom-data/metafields"
-            target="_blank"
-          >
-            metafield
-          </s-link>{" "}
-          and{" "}
-          <s-link
-            href="https://shopify.dev/docs/apps/build/custom-data/metaobjects"
-            target="_blank"
-          >
-            metaobject
-          </s-link>
-          .
-        </s-paragraph>
-        <s-stack direction="inline" gap="base">
-          <s-button
-            onClick={generateProduct}
-            {...(isLoading ? { loading: true } : {})}
-          >
-            Generate a product
-          </s-button>
-          {fetcher.data?.product && (
-            <s-button
-              onClick={() => {
-                shopify.intents.invoke?.("edit:shopify/Product", {
-                  value: fetcher.data?.product?.id,
-                });
-              }}
-              target="_blank"
-              variant="tertiary"
-            >
-              Edit product
-            </s-button>
-          )}
-        </s-stack>
-        {fetcher.data?.product && (
-          <s-section heading="productCreate mutation">
-            <s-stack direction="block" gap="base">
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre
-                  style={{
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <code>{JSON.stringify(fetcher.data.product, null, 2)}</code>
-                </pre>
-              </s-box>
-
-              <s-heading>productVariantsBulkUpdate mutation</s-heading>
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre
-                  style={{
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <code>{JSON.stringify(fetcher.data.variant, null, 2)}</code>
-                </pre>
-              </s-box>
-
-              <s-heading>metaobjectUpsert mutation</s-heading>
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <pre
-                  style={{
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <code>
-                    {JSON.stringify(fetcher.data.metaobject, null, 2)}
-                  </code>
-                </pre>
-              </s-box>
-            </s-stack>
-          </s-section>
-        )}
-      </s-section>
-
-      <s-section slot="aside" heading="App template specs">
-        <s-paragraph>
-          <s-text>Framework: </s-text>
-          <s-link href="https://reactrouter.com/" target="_blank">
-            React Router
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Interface: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/app-home/using-polaris-components"
-            target="_blank"
-          >
-            Polaris web components
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>API: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/api/admin-graphql"
-            target="_blank"
-          >
-            GraphQL
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Custom data: </s-text>
-          <s-link
-            href="https://shopify.dev/docs/apps/build/custom-data"
-            target="_blank"
-          >
-            Metafields &amp; metaobjects
-          </s-link>
-        </s-paragraph>
-        <s-paragraph>
-          <s-text>Database: </s-text>
-          <s-link href="https://www.prisma.io/" target="_blank">
-            Prisma
-          </s-link>
-        </s-paragraph>
-      </s-section>
-
-      <s-section slot="aside" heading="Next steps">
-        <s-unordered-list>
-          <s-list-item>
-            Build an{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/getting-started/build-app-example"
-              target="_blank"
-            >
-              example app
-            </s-link>
-          </s-list-item>
-          <s-list-item>
-            Explore Shopify&apos;s API with{" "}
-            <s-link
-              href="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-              target="_blank"
-            >
-              GraphiQL
-            </s-link>
-          </s-list-item>
-        </s-unordered-list>
-      </s-section>
-    </s-page>
+function JsonOutput({ value }: { value: unknown }) {
+  return (
+    <Box
+      padding="400"
+      borderWidth="025"
+      borderColor="border"
+      borderRadius="200"
+      background="bg-surface-secondary"
+    >
+      <pre
+        style={{
+          margin: 0,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
+        <code>{JSON.stringify(value, null, 2)}</code>
+      </pre>
+    </Box>
   );
 }
 
