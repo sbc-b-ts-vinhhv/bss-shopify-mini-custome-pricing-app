@@ -1,6 +1,10 @@
-export interface ShopData {
+export interface Shop {
   id: string;
   name: string;
-  email: string;
+  domain: string;
+  senderEmail: string;
+}
+
+export interface ShopFormValues {
   senderEmail: string;
 }

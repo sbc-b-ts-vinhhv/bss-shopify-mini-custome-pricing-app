@@ -1,23 +1,55 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { mockShop } from "app/mocks/mock-data";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import type { Shop, ShopFormValues } from "../../types/shop";
+import {
+  getShop,
+  updateSenderEmail as updateSenderEmailService,
+} from "../../services/shop.service";
 
-const initialState = {
-  shopData: mockShop,
+interface ShopState {
+  data: Shop | null;
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: string | null;
+}
+
+const initialState: ShopState = {
+  data: null,
+  status: "idle",
+  error: null,
 };
+
+export const fetchShop = createAsyncThunk("shop/fetchShop", async () => {
+  return await getShop();
+});
+
+export const updateSenderEmail = createAsyncThunk(
+  "shop/updateSenderEmail",
+  async (values: ShopFormValues) => {
+    return await updateSenderEmailService(values);
+  },
+);
 
 const shopSlice = createSlice({
   name: "shop",
   initialState,
-  reducers: {
-    updateSenderEmail: (
-      state,
-      action: PayloadAction<string>
-    ) => {
-      state.shopData.senderEmail = action.payload;
-    },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchShop.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchShop.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.data = action.payload;
+      })
+      .addCase(fetchShop.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message ?? "Failed to load shop";
+      })
+      .addCase(updateSenderEmail.fulfilled, (state, action) => {
+        state.data = action.payload;
+      });
   },
 });
-
-export const { updateSenderEmail } = shopSlice.actions;
 
 export default shopSlice.reducer;

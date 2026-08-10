@@ -1,71 +1,116 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { CPRule } from "app/types/rule";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import type { CPRule, RuleFormValues } from "../../types/rule";
+import {
+  createRule as createRuleService,
+  deleteRule as deleteRuleService,
+  duplicateRule as duplicateRuleService,
+  getRuleById,
+  getRules,
+  updateRule as updateRuleService,
+} from "../../services/rules.service";
 
 interface RuleState {
-  rules: CPRule[];
+  items: CPRule[];
+  currentRule: CPRule | null;
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: string | null;
 }
 
 const initialState: RuleState = {
-  rules: [],
+  items: [],
+  currentRule: null,
+  status: "idle",
+  error: null,
 };
+
+export const fetchRules = createAsyncThunk("rule/fetchRules", async () => {
+  return await getRules();
+});
+
+export const fetchRuleById = createAsyncThunk(
+  "rule/fetchRuleById",
+  async (id: string) => {
+    return await getRuleById(id);
+  },
+);
+
+export const createRule = createAsyncThunk(
+  "rule/createRule",
+  async (values: RuleFormValues) => {
+    return await createRuleService(values);
+  },
+);
+
+export const updateRule = createAsyncThunk(
+  "rule/updateRule",
+  async ({ id, values }: { id: string; values: RuleFormValues }) => {
+    return await updateRuleService(id, values);
+  },
+);
+
+export const removeRule = createAsyncThunk(
+  "rule/removeRule",
+  async (id: string) => {
+    return await deleteRuleService(id);
+  },
+);
+
+export const duplicateRule = createAsyncThunk(
+  "rule/duplicateRule",
+  async (id: string) => {
+    return await duplicateRuleService(id);
+  },
+);
 
 const ruleSlice = createSlice({
   name: "rule",
   initialState,
   reducers: {
-    createRule: (
-      state,
-      action: PayloadAction<CPRule>
-    ) => {
-      state.rules.push(action.payload);
+    clearCurrentRule(state) {
+      state.currentRule = null;
     },
-
-    updateRule: (
-      state,
-      action: PayloadAction<CPRule>
-    ) => {
-      const index = state.rules.findIndex(
-        (rule) => rule.id === action.payload.id
-      );
-
-      if (index !== -1) {
-        state.rules[index] = action.payload;
-      }
-    },
-
-    removeRule: (
-      state,
-      action: PayloadAction<string>
-    ) => {
-      state.rules = state.rules.filter(
-        (rule) => rule.id !== action.payload
-      );
-    },
-
-    duplicateRule: (
-      state,
-      action: PayloadAction<string>
-    ) => {
-      const rule = state.rules.find(
-        (rule) => rule.id === action.payload
-      );
-
-      if (!rule) return;
-
-      state.rules.push({
-        ...rule,
-        id: crypto.randomUUID(),
-        name: `${rule.name} Copy`,
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchRules.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchRules.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = action.payload;
+      })
+      .addCase(fetchRules.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message ?? "Failed to load rules";
+      })
+      .addCase(fetchRuleById.fulfilled, (state, action) => {
+        state.currentRule = action.payload ?? null;
+      })
+      .addCase(createRule.fulfilled, (state, action) => {
+        state.items = [action.payload, ...state.items];
+      })
+      .addCase(updateRule.fulfilled, (state, action) => {
+        state.items = state.items.map((item) =>
+          item.id === action.payload.id ? action.payload : item,
+        );
+        if (state.currentRule?.id === action.payload.id) {
+          state.currentRule = action.payload;
+        }
+      })
+      .addCase(removeRule.fulfilled, (state, action) => {
+        state.items = state.items.filter(
+          (item) => item.id !== action.payload.id,
+        );
+        if (state.currentRule?.id === action.payload.id) {
+          state.currentRule = null;
+        }
+      })
+      .addCase(duplicateRule.fulfilled, (state, action) => {
+        state.items = [action.payload, ...state.items];
       });
-    },
   },
 });
 
-export const {
-  createRule,
-  updateRule,
-  removeRule,
-  duplicateRule,
-} = ruleSlice.actions;
-
+export const { clearCurrentRule } = ruleSlice.actions;
 export default ruleSlice.reducer;
