@@ -3,6 +3,7 @@ import {
   Badge,
   Banner,
   BlockStack,
+  Box,
   Button,
   Card,
   EmptyState,
@@ -10,6 +11,7 @@ import {
   InlineStack,
   Link,
   Page,
+  Spinner,
   Text,
 } from "@shopify/polaris";
 import { EditIcon, DuplicateIcon, DeleteIcon } from "@shopify/polaris-icons";
@@ -17,11 +19,12 @@ import { useRules } from "app/hooks/useRules";
 import { CPRule } from "app/types/rule";
 import { formatDate, getRuleDisplayData } from "app/utils/rule-display";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 
 export default function RulesPage() {
   const shopify = useAppBridge();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { rules, loading, error, refetch, duplicateRule, deleteRule } =
     useRules();
 
@@ -31,6 +34,30 @@ export default function RulesPage() {
   const handleDuplicate = () => {};
 
   const handleDelet = () => {};
+
+  const normalizedPathname = pathname.replace(/\/$/, "");
+
+  if (normalizedPathname !== "/app/rules") {
+    return <Outlet />;
+  }
+
+  if (loading) {
+    return (
+      <Page
+        title="Custom Pricing Rules"
+        primaryAction={{
+          content: "Add rule",
+          onAction: () => navigate("/app/rules/new"),
+        }}
+      >
+        <Box minHeight="70vh">
+          <InlineStack align="center" blockAlign="center">
+            <Spinner accessibilityLabel="Loading pricing rules" size="large" />
+          </InlineStack>
+        </Box>
+      </Page>
+    );
+  }
 
   const rows = rules.map((rule, index) => {
     const { applyTo, discount } = getRuleDisplayData(rule);
@@ -109,11 +136,11 @@ export default function RulesPage() {
       }}
     >
       <BlockStack gap="400">
-        {rules.length === 0 && (
+        {!loading && rules.length === 0 && (
           <Card>
             <EmptyState
-              image=""
-              heading="Crete your first pricing rule"
+              image="/images/empty-state.svg"
+              heading="Create your first pricing rule"
               action={{
                 content: "Create rule",
                 url: "/app/rules/new",
@@ -127,7 +154,7 @@ export default function RulesPage() {
           </Card>
         )}
 
-        {rules.length > 0 && (
+        {!loading && rules.length > 0 && (
           <Card padding={"0"}>
             <IndexTable
               resourceName={{

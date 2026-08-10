@@ -1,4 +1,31 @@
-import type { CPRule, DiscountConfig, ProductCondition } from "../types/rule";
+import { ChoiceListProps } from "@shopify/polaris";
+import type { CPRule, DiscountConfig, ProductCondition, RuleStatus } from "../types/rule";
+
+export const discountTypeOptions: ChoiceListProps["choices"] = [
+  {
+    label: "Apply a price to selected products/variants",
+    value: "FIXED_PRICE",
+  },
+  {
+    label: "Decrease a fixed amount off the original price",
+    value: "DECREASE_FIXED",
+  },
+  {
+    label: "Decrease the original price by a percentage (%)",
+    value: "DECREASE_PERCENTAGE",
+  },
+];
+
+export const productConditionOptions: ChoiceListProps["choices"] = [
+  {
+    label: "All products",
+    value: "ALL",
+  },
+  {
+    label: "Product tags",
+    value: "TAGS",
+  },
+];
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -46,3 +73,11 @@ export const formatDate = (date: string) => {
     year: "numeric",
   }).format(new Date(date));
 };
+
+export function statusSelectValue(status: RuleStatus) {
+  return status === "enabled" ? "enabled" : "disabled";
+}
+
+export function statusBadgeTone(status: RuleStatus) {
+  return status === "enabled" ? "success" : "critical";
+}

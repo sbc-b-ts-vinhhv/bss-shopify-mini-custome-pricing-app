@@ -8,6 +8,7 @@ import {
 
 export function useRules() {
   const dispatch = useAppDispatch();
+
   const { items, status, error } = useAppSelector((state) => state.rule);
 
   useEffect(() => {
@@ -18,10 +19,15 @@ export function useRules() {
 
   return {
     rules: items,
-    loading: status === "loading",
+
+    loading: status === "idle" || status === "loading",
+
     error,
+
     refetch: () => dispatch(fetchRules()),
+
     duplicateRule: (id: string) => dispatch(duplicateRule(id)),
+
     deleteRule: (id: string) => dispatch(removeRule(id)),
   };
 }

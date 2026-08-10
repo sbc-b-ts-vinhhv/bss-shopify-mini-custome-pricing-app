@@ -1,5 +1,6 @@
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import {
+  Link,
   Outlet,
   useLoaderData,
   useLocation,
@@ -10,6 +11,7 @@ import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { Frame, Navigation } from "@shopify/polaris";
 
 import { authenticate } from "../shopify.server";
+import { NavMenu } from "@shopify/app-bridge-react";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -25,6 +27,15 @@ export default function App() {
   return (
     <AppProvider embedded apiKey={apiKey}>
       <Frame>
+        <NavMenu>
+        <Link to="/app" rel="home">
+          Home
+        </Link>
+
+        <Link to="/app/rules">
+          Rules
+        </Link>
+      </NavMenu>
         <Outlet />
       </Frame>
     </AppProvider>

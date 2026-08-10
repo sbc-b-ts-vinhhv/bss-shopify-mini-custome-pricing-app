@@ -1,0 +1,28 @@
+.formShell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px 20px;
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(248, 248, 249, 0.96), rgba(255, 255, 255, 1));
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 10px;
+  color: rgb(48, 49, 51);
+}
+
+.sectionBody {
+  min-width: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .formShell {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionLabel {
+    padding-top: 0;
+  }
+}

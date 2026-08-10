@@ -11,6 +11,7 @@ function toRulePayload(values: RuleFormValues): CPRule {
     id: `rule_${crypto.randomUUID()}`,
     name: values.name.trim(),
     status: values.status,
+    priority: rulesStore.length,
     productCondition: {
       type: values.productConditionType,
       tags: values.tags,
