@@ -20,25 +20,23 @@ import {
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import prisma from "app/db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
+  console.log("session shop: ", session.shop)
 
-  const responseAdmin = await admin.graphql(`
-  query {
-    customers(first: 1) {
-      nodes {
-        id
-        displayName
-      }
-    }
-  }
-`);
+//   const responseAdmin = await admin.graphql(`
+//   query {
+//     customers(first: 1) {
+//       nodes {
+//         id
+//         displayName
+//       }
+//     }
+//   }
+// `);
 
-  const resultAdmin = await responseAdmin.json();
-
-  console.log(resultAdmin);
+//   const resultAdmin = await responseAdmin.json();
 
   const response = await admin.graphql(`
     query {
@@ -54,21 +52,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     throw new Error("Access token is missing");
   }
 
-  await prisma.shop.upsert({
-    where: {
-      shopDomain: session.shop,
-    },
-    update: {
-      shopName: result.data.shop.name,
-      accessToken: session.accessToken,
-    },
-    create: {
-      id: result.data.shop.id,
-      shopDomain: session.shop,
-      shopName: result.data.shop.name,
-      accessToken: session.accessToken,
-    },
-  });
+  console.log("result: ", result.data?.shop)
 
   return null;
 };

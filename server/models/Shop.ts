@@ -17,6 +17,7 @@ export class Shop extends Model<
   declare id: CreationOptional<number>;
 
   declare shop: string;
+  declare shopifyId: string;
 
   declare token: string;
 
@@ -36,6 +37,11 @@ Shop.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+    shopifyId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
     },
 
     shop: {

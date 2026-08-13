@@ -7,7 +7,6 @@
     "dev:server": "tsx server/app.ts",
     "dev:server:sync-db": "tsx server/sync-db.ts",
     "dev:server:test-db": "tsx server/test-db.ts",
-    "dev:server:test-db": "tsx server/test-db.ts",
     "db:migrate": "tsx server/migrate.ts up",
     "db:migrate:undo": "tsx server/migrate.ts down",
     "config:link": "shopify app config link",

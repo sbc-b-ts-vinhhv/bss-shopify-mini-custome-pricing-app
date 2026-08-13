@@ -1,92 +1,85 @@
-import { mockRules } from "../mocks/mock-data";
 import type { CPRule, RuleFormValues } from "../types/rule";
-import { delay } from "./delay";
+import { getShop } from "./shop.service";
+import { apiRequest } from "./api-client";
 
-let rulesStore: CPRule[] = [...mockRules];
+type RuleResponse = CPRule;
 
-function toRulePayload(values: RuleFormValues): CPRule {
-  const now = new Date().toISOString();
+async function getCurrentShopId() {
+  const shop = await getShop();
 
+  return Number(shop.id);
+}
+
+function toRuleRequestBody(values: RuleFormValues, shopId: number) {
   return {
-    id: `rule_${crypto.randomUUID()}`,
+    shopId,
     name: values.name.trim(),
     status: values.status,
-    priority: rulesStore.length,
-    productCondition: {
-      type: values.productConditionType,
-      tags: values.tags,
-    },
-    discount: {
-      type: values.discountType,
-      value: Number(values.discountValue),
-    },
-    createdAt: now,
-    updatedAt: now,
+    productConditionType: values.productConditionType,
+    productTags: values.productConditionType === "TAGS"
+      ? values.tags.map((tag) => tag.trim()).filter(Boolean)
+      : [],
+    discountType: values.discountType,
+    discountValue: Number(values.discountValue),
   };
 }
 
 export async function getRules(): Promise<CPRule[]> {
-  return delay([...rulesStore]);
+  const shopId = await getCurrentShopId();
+
+  return apiRequest<RuleResponse[]>(
+    `/api/rules${Number.isFinite(shopId) ? `?shopId=${shopId}` : ""}`,
+  );
 }
 
 export async function getRuleById(id: string): Promise<CPRule | undefined> {
-  const rule = rulesStore.find((item) => item.id === id);
-  return delay(rule);
+  try {
+    return await apiRequest<RuleResponse>(`/api/rules/${id}`);
+  } catch (error) {
+    if (error instanceof Error && /status 404/.test(error.message)) {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
 export async function createRule(values: RuleFormValues): Promise<CPRule> {
-  const newRule = toRulePayload(values);
-  rulesStore = [newRule, ...rulesStore];
-  return delay(newRule);
+  const shopId = await getCurrentShopId();
+
+  return apiRequest<RuleResponse>("/api/rules", {
+    method: "POST",
+    body: JSON.stringify(toRuleRequestBody(values, shopId)),
+  });
 }
 
 export async function updateRule(id: string, values: RuleFormValues): Promise<CPRule> {
-  const existing = rulesStore.find((item) => item.id === id);
-
-  if (!existing) {
-    throw new Error("Rule not found");
-  }
-
-  const updated: CPRule = {
-    ...existing,
-    name: values.name.trim(),
-    status: values.status,
-    productCondition: {
-      type: values.productConditionType,
-      tags: values.tags,
-    },
-    discount: {
-      type: values.discountType,
-      value: Number(values.discountValue),
-    },
-    updatedAt: new Date().toISOString(),
-  };
-
-  rulesStore = rulesStore.map((item) => (item.id === id ? updated : item));
-  return delay(updated);
+  return apiRequest<RuleResponse>(`/api/rules/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      name: values.name.trim(),
+      status: values.status,
+      productConditionType: values.productConditionType,
+      productTags:
+        values.productConditionType === "TAGS"
+          ? values.tags.map((tag) => tag.trim()).filter(Boolean)
+          : [],
+      discountType: values.discountType,
+      discountValue: Number(values.discountValue),
+    }),
+  });
 }
 
 export async function deleteRule(id: string): Promise<{ id: string }> {
-  rulesStore = rulesStore.filter((item) => item.id !== id);
-  return delay({ id });
+  await apiRequest<void>(`/api/rules/${id}`, {
+    method: "DELETE",
+  });
+
+  return { id };
 }
 
 export async function duplicateRule(id: string): Promise<CPRule> {
-  const original = rulesStore.find((item) => item.id === id);
-
-  if (!original) {
-    throw new Error("Rule not found");
-  }
-
-  const now = new Date().toISOString();
-  const duplicated: CPRule = {
-    ...original,
-    id: `rule_${crypto.randomUUID()}`,
-    name: `${original.name} Copy`,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  rulesStore = [duplicated, ...rulesStore];
-  return delay(duplicated);
+  return apiRequest<RuleResponse>(`/api/rules/${id}/duplicate`, {
+    method: "POST",
+  });
 }

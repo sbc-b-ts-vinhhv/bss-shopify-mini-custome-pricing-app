@@ -14,8 +14,8 @@
 | 4 | Shop API | Hoàn thiện `POST /api/shops`, `GET /api/shops/:id`, `PATCH /api/shops/:id` (không lộ token) | ✅ Done |
 | 5 | Rule API | `POST/GET/GET :id/PATCH/DELETE /api/rules`, `POST /api/rules/:id/duplicate` | ✅ Done |
 | 6 | Validation | Validator cho Rule (name, status, applyType, tags, discountType, discountValue) và Shop | ⏳ Todo |
-| 7 | Kết nối Frontend | Thay `app/services/rules.service.ts`, `app/services/shop.service.ts` gọi API thật thay vì mock, giữ nguyên hook/Redux | ⏳ Todo |
-| 8 | Test bằng curl/Postman | Theo checklist mục 44-45 trong `CLAUDE_TASK.md` | ⏳ Todo |
+| 7 | Kết nối Frontend | Thay `app/services/rules.service.ts`, `app/services/shop.service.ts` gọi API thật thay vì mock, giữ nguyên hook/Redux | ✅ Done |
+| 8 | Test bằng curl/Postman | Theo checklist mục 44-45 trong `CLAUDE_TASK.md` | ✅ Done |
 | 9 | Shopify GraphQL Admin API | Service lấy Shop info (email, name), Product (title, tags, price), Customer — dùng cho pricing & sync | ⏳ Todo |
 
 ## Bối cảnh quan trọng đã xác nhận (không cần phân tích lại)
