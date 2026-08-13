@@ -17,6 +17,7 @@ export interface DiscountConfig {
 
 export interface CPRule {
   id: string;
+  // shop_id
   name: string;
   status: RuleStatus;
   priority: number;

@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useAppBridge } from "@shopify/app-bridge-react";
 import {
   Badge,
@@ -9,10 +10,12 @@ import {
   EmptyState,
   IndexTable,
   InlineStack,
-  Link,
+  Modal,
   Page,
   Spinner,
   Text,
+  INDEX_TABLE_SELECT_ALL_ITEMS,
+  useIndexResourceState,
 } from "@shopify/polaris";
 import { EditIcon, DuplicateIcon, DeleteIcon } from "@shopify/polaris-icons";
 import { useRules } from "app/hooks/useRules";
@@ -27,13 +30,29 @@ export default function RulesPage() {
   const { pathname } = useLocation();
   const { rules, loading, error, refetch, duplicateRule, deleteRule } =
     useRules();
+  const selectableRules = rules.map((rule) => ({ id: rule.id }));
 
-  const [ruleToDeletes, setRuleToDelete] = useState<CPRule | null>(null);
+  const [ruleToDelete, setRuleToDelete] = useState<CPRule | null>(null);
   const [processingRuleId, setProcessingRuleId] = useState<string | null>(null);
+  const { selectedResources, allResourcesSelected, handleSelectionChange } =
+    useIndexResourceState(selectableRules);
 
   const handleDuplicate = () => {};
 
-  const handleDelet = () => {};
+  const handleDelete = async () => {
+    if (!ruleToDelete) return;
+    setProcessingRuleId(ruleToDelete.id);
+
+    try {
+      await deleteRule(ruleToDelete.id).unwrap();
+      shopify.toast.show(`Removed "${ruleToDelete.name}"`);
+      setRuleToDelete(null);
+    } catch (error) {
+      shopify.toast.show("Could not remove rule", { isError: true });
+    } finally {
+      setProcessingRuleId(null);
+    }
+  };
 
   const normalizedPathname = pathname.replace(/\/$/, "");
 
@@ -60,15 +79,14 @@ export default function RulesPage() {
   }
 
   const rows = rules.map((rule, index) => {
-    const { applyTo, discount } = getRuleDisplayData(rule);
-    const isProcessing = processingRuleId === rule.id;
+    const isSelected = selectedResources.includes(rule.id);
 
     return (
       <IndexTable.Row
         id={rule.id}
         key={rule.id}
         position={index}
-        onClick={() => navigate(`/app/rules/${rule.id}`)}
+        selected={isSelected}
       >
         <IndexTable.Cell>
           <Text as="span" variant="bodyMd" fontWeight="semibold">
@@ -92,36 +110,36 @@ export default function RulesPage() {
 
         {/* Action */}
         <IndexTable.Cell>
-          <InlineStack gap="200" wrap={false}>
-            <Button
-              icon={EditIcon}
-              variant="secondary"
-              accessibilityLabel={`Edit ${rule.name}`}
-              onClick={() => {
-                navigate(`/app/rules/${rule.id}`);
-              }}
-            />
+          <div onClick={(event) => event.stopPropagation()}>
+            <InlineStack gap={"150"}>
+              <Button
+                icon={EditIcon}
+                variant="secondary"
+                accessibilityLabel={`Edit ${rule.name}`}
+                onClick={() => {
+                  navigate(`/app/rules/${rule.id}`);
+                }}
+              />
 
-            <Button
-              icon={DuplicateIcon}
-              variant="secondary"
-              accessibilityLabel={`Duplicate ${rule.name}`}
-              onClick={() => {
-                // TODO: duplicate rule
-              }}
-            />
+              <Button
+                icon={DuplicateIcon}
+                variant="secondary"
+                accessibilityLabel={`Duplicate ${rule.name}`}
+                onClick={() => {
+                  // TODO: duplicate rule
+                }}
+              />
 
-            <Button
-              icon={DeleteIcon}
-              variant="secondary"
-              tone="critical"
-              disabled={processingRuleId !== null}
-              accessibilityLabel={`Remove ${rule.name}`}
-              onClick={() => {
-                setRuleToDelete(rule);
-              }}
-            />
-          </InlineStack>
+              <Button
+                icon={DeleteIcon}
+                variant="secondary"
+                tone="critical"
+                disabled={processingRuleId !== null}
+                accessibilityLabel={`Remove ${rule.name}`}
+                onClick={() => setRuleToDelete(rule)}
+              />
+            </InlineStack>
+          </div>
         </IndexTable.Cell>
       </IndexTable.Row>
     );
@@ -162,7 +180,13 @@ export default function RulesPage() {
                 plural: "pricing rules",
               }}
               itemCount={rules.length}
-              selectable={false}
+              selectable
+              selectedItemsCount={
+                allResourcesSelected
+                  ? INDEX_TABLE_SELECT_ALL_ITEMS
+                  : selectedResources.length
+              }
+              onSelectionChange={handleSelectionChange}
               headings={[
                 { title: "Name" },
                 { title: "Status" },
@@ -177,6 +201,36 @@ export default function RulesPage() {
           </Card>
         )}
       </BlockStack>
+
+      <Modal
+        open={ruleToDelete !== null}
+        onClose={() => setRuleToDelete(null)}
+        title="Remove pricing rule?"
+        primaryAction={{
+          content: "Remove",
+          destructive: true,
+          loading: processingRuleId === ruleToDelete?.id,
+          onAction: handleDelete,
+        }}
+
+        secondaryActions={[
+          {
+            content: "Cancel",
+            disabled: processingRuleId !== null,
+            onAction: () => setRuleToDelete(null),
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p">
+            Are you sure you want to remove{" "}
+            <Text as="span" fontWeight="semibold">
+              {ruleToDelete?.name}
+            </Text>
+            ? This action cannot be undone.
+          </Text>
+        </Modal.Section>
+      </Modal>
     </Page>
   );
 }

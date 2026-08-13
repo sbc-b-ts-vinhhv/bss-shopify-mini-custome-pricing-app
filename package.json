@@ -4,6 +4,9 @@
   "scripts": {
     "build": "react-router build",
     "dev": "shopify app dev",
+    "dev:server": "tsx server/app.ts",
+    "dev:server:sync-db": "tsx server/sync-db.ts",
+    "dev:server:test-db": "tsx server/test-db.ts",
     "config:link": "shopify app config link",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy",
@@ -24,6 +27,7 @@
     "node": ">=20.19 <22 || >=22.12"
   },
   "dependencies": {
+    "@koa/router": "^15.7.0",
     "@prisma/client": "^6.16.3",
     "@react-router/dev": "^7.12.0",
     "@react-router/fs-routes": "^7.12.0",
@@ -34,18 +38,25 @@
     "@shopify/polaris": "^13.9.5",
     "@shopify/shopify-app-react-router": "^1.2.1",
     "@shopify/shopify-app-session-storage-prisma": "^9.0.0",
+    "dotenv": "^17.4.2",
     "isbot": "^5.1.31",
+    "koa": "^3.2.1",
+    "koa-bodyparser": "^4.4.1",
+    "mysql2": "^3.23.3",
     "prisma": "^6.16.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-redux": "^9.3.0",
     "react-router": "^7.12.0",
+    "sequelize": "^6.37.8",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "devDependencies": {
     "@shopify/api-codegen-preset": "^1.2.0",
     "@shopify/polaris-types": "^1.0.1",
     "@types/eslint": "^9.6.1",
+    "@types/koa": "^3.0.3",
+    "@types/koa__router": "^12.0.5",
     "@types/node": "^22.18.8",
     "@types/react": "^18.3.25",
     "@types/react-dom": "^18.3.7",
@@ -59,6 +70,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "graphql-config": "^5.1.1",
     "prettier": "^3.6.2",
+    "tsx": "^4.23.12",
     "typescript": "^5.9.3",
     "vite": "^6.3.6"
   },
