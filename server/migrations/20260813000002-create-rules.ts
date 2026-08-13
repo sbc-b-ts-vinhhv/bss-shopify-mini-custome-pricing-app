@@ -1,84 +1,48 @@
-import {
-  DataTypes,
-  CreationOptional,
-  InferAttributes,
-  InferCreationAttributes,
-  Model,
-} from "sequelize";
+import { DataTypes, QueryInterface } from "sequelize";
 
-import { sequelize } from "../config/database.js";
-
-export type RuleStatus = "enabled" | "disabled";
-export type ProductConditionType = "ALL" | "TAGS";
-export type DiscountType =
-  "FIXED_PRICE" | "DECREASE_FIXED" | "DECREASE_PERCENTAGE";
-
-export class Rule extends Model<
-  InferAttributes<Rule>,
-  InferCreationAttributes<Rule>
-> {
-  declare id: CreationOptional<number>;
-
-  declare shopId: number;
-
-  declare name: string;
-  declare status: CreationOptional<RuleStatus>;
-  declare priority: CreationOptional<number>;
-
-  declare productConditionType: ProductConditionType;
-  declare productTags: CreationOptional<string[]>;
-
-  declare discountType: DiscountType;
-  declare discountValue: number;
-
-  declare endAt: Date | null;
-
-  declare createdAt: CreationOptional<Date>;
-  declare updatedAt: CreationOptional<Date>;
-}
-
-Rule.init(
-  {
+export async function up({
+  context: queryInterface,
+}: {
+  context: QueryInterface;
+}) {
+  await queryInterface.createTable("rules", {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-
     shopId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: "shops",
+        key: "id",
+      },
+      onDelete: "CASCADE",
     },
-
     name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-
     status: {
       type: DataTypes.ENUM("enabled", "disabled"),
       allowNull: false,
       defaultValue: "enabled",
     },
-
     priority: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
-
     productConditionType: {
       type: DataTypes.ENUM("ALL", "TAGS"),
       allowNull: false,
       defaultValue: "ALL",
     },
-
     productTags: {
       type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: [],
     },
-
     discountType: {
       type: DataTypes.ENUM(
         "FIXED_PRICE",
@@ -87,32 +51,29 @@ Rule.init(
       ),
       allowNull: false,
     },
-
     discountValue: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
-
     endAt: {
       type: DataTypes.DATE,
       allowNull: true,
     },
-
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.NOW,
     },
-
     updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.NOW,
     },
-  },
-  {
-    sequelize,
-    tableName: "rules",
-    timestamps: true,
-  },
-);
+  });
+}
+
+export async function down({
+  context: queryInterface,
+}: {
+  context: QueryInterface;
+}) {
+  await queryInterface.dropTable("rules");
+}

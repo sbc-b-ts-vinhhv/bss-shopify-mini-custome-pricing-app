@@ -7,6 +7,9 @@
     "dev:server": "tsx server/app.ts",
     "dev:server:sync-db": "tsx server/sync-db.ts",
     "dev:server:test-db": "tsx server/test-db.ts",
+    "dev:server:test-db": "tsx server/test-db.ts",
+    "db:migrate": "tsx server/migrate.ts up",
+    "db:migrate:undo": "tsx server/migrate.ts down",
     "config:link": "shopify app config link",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy",
@@ -72,6 +75,7 @@
     "prettier": "^3.6.2",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3",
+    "umzug": "^3.8.3",
     "vite": "^6.3.6"
   },
   "workspaces": [

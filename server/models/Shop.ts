@@ -8,19 +8,23 @@ import {
 
 import { sequelize } from "../config/database.js";
 
+export type ShopStatus = "active" | "uninstalled";
+
 export class Shop extends Model<
   InferAttributes<Shop>,
   InferCreationAttributes<Shop>
 > {
   declare id: CreationOptional<number>;
 
-  declare shopifyShopId: string;
-  declare shopifyDomain: string;
+  declare shop: string;
+
+  declare token: string;
 
   declare name: string;
   declare email: string | null;
-  declare firstName: string | null;
-  declare currency: string | null;
+  declare senderEmail: string | null;
+
+  declare status: CreationOptional<ShopStatus>;
 
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
@@ -34,16 +38,15 @@ Shop.init(
       primaryKey: true,
     },
 
-    shopifyShopId: {
+    shop: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
     },
 
-    shopifyDomain: {
+    token: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
 
     name: {
@@ -56,14 +59,15 @@ Shop.init(
       allowNull: true,
     },
 
-    firstName: {
+    senderEmail: {
       type: DataTypes.STRING,
       allowNull: true,
     },
 
-    currency: {
-      type: DataTypes.STRING,
-      allowNull: true,
+    status: {
+      type: DataTypes.ENUM("active", "uninstalled"),
+      allowNull: false,
+      defaultValue: "active",
     },
 
     createdAt: {
