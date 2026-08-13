@@ -161,7 +161,7 @@ export default function RulesPage() {
               heading="Create your first pricing rule"
               action={{
                 content: "Create rule",
-                url: "/app/rules/new",
+                onAction: () => navigate("/app/rules/new"),
               }}
             >
               <p>

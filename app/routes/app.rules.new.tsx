@@ -7,6 +7,7 @@ export default function NewRulePage() {
   const dispatch = useAppDispatch();
 
   const handleSubmit = async (values: RuleFormValues) => {
+    console.log("CREATE CLICK")
     await dispatch(createRule(values)).unwrap();
   };
 

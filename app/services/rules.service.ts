@@ -4,12 +4,6 @@ import { apiRequest } from "./api-client";
 
 type RuleResponse = CPRule;
 
-async function getCurrentShopId() {
-  const shop = await getShop();
-
-  return Number(shop.id);
-}
-
 function toRuleRequestBody(values: RuleFormValues, shopId: number) {
   return {
     shopId,
@@ -24,9 +18,7 @@ function toRuleRequestBody(values: RuleFormValues, shopId: number) {
   };
 }
 
-export async function getRules(): Promise<CPRule[]> {
-  const shopId = await getCurrentShopId();
-
+export async function getRules(shopId: number): Promise<CPRule[]> {
   return apiRequest<RuleResponse[]>(
     `/api/rules${Number.isFinite(shopId) ? `?shopId=${shopId}` : ""}`,
   );
@@ -44,9 +36,7 @@ export async function getRuleById(id: string): Promise<CPRule | undefined> {
   }
 }
 
-export async function createRule(values: RuleFormValues): Promise<CPRule> {
-  const shopId = await getCurrentShopId();
-
+export async function createRule(values: RuleFormValues, shopId: number): Promise<CPRule> {
   return apiRequest<RuleResponse>("/api/rules", {
     method: "POST",
     body: JSON.stringify(toRuleRequestBody(values, shopId)),
