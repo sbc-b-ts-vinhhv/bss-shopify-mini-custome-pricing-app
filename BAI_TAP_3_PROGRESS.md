@@ -10,9 +10,9 @@
 |---|------|----------|------------|
 | 1 | Chuẩn hoá Model | Sửa `server/models/Shop.ts`, `server/models/Rule.ts` cho khớp `app/types/shop.ts`, `app/types/rule.ts` | ✅ Done |
 | 2 | Migration | Thay `sync({alter:true})` bằng migration thật dùng `umzug` (`server/migrations/*.ts`, `server/migrate.ts`) | ✅ Done (đã paste code, đang chờ xác nhận chạy `npm run db:migrate` thành công) |
-| 3 | Koa infra | Response format chuẩn `{success, data}` / `{success, error}` + centralized error handler middleware | ⏳ Next |
-| 4 | Shop API | Hoàn thiện `POST /api/shops`, `GET /api/shops/:id`, `PATCH /api/shops/:id` (không lộ token) | ⏳ Todo |
-| 5 | Rule API | `POST/GET/GET :id/PATCH/DELETE /api/rules`, `POST /api/rules/:id/duplicate` | ⏳ Todo |
+| 3 | Koa infra | Response format chuẩn `{success, data}` / `{success, error}` + centralized error handler middleware | ✅ Done |
+| 4 | Shop API | Hoàn thiện `POST /api/shops`, `GET /api/shops/:id`, `PATCH /api/shops/:id` (không lộ token) | ✅ Done |
+| 5 | Rule API | `POST/GET/GET :id/PATCH/DELETE /api/rules`, `POST /api/rules/:id/duplicate` | ✅ Done |
 | 6 | Validation | Validator cho Rule (name, status, applyType, tags, discountType, discountValue) và Shop | ⏳ Todo |
 | 7 | Kết nối Frontend | Thay `app/services/rules.service.ts`, `app/services/shop.service.ts` gọi API thật thay vì mock, giữ nguyên hook/Redux | ⏳ Todo |
 | 8 | Test bằng curl/Postman | Theo checklist mục 44-45 trong `CLAUDE_TASK.md` | ⏳ Todo |

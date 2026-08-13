@@ -12,6 +12,6 @@ const router = new Router({
 
 router.post("/", createShopController);
 router.get("/:id", getShopController);
-router.put("/:id", updateShopController);
+router.patch("/:id", updateShopController);
 
 export default router;

@@ -4,6 +4,7 @@ import bodyParser from "koa-bodyparser";
 import Router, { type RouterContext } from "@koa/router";
 
 import shopRoutes from "./routes/shop.routes.js";
+import ruleRoutes from "./routes/rule.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const require = createRequire(import.meta.url);
@@ -34,6 +35,9 @@ app.use(router.allowedMethods());
 
 app.use(shopRoutes.routes());
 app.use(shopRoutes.allowedMethods());
+
+app.use(ruleRoutes.routes());
+app.use(ruleRoutes.allowedMethods());
 
 const PORT = Number(process.env.PORT) || 3000;
 
