@@ -4,6 +4,7 @@ import bodyParser from "koa-bodyparser";
 import Router, { type RouterContext } from "@koa/router";
 
 import shopRoutes from "./routes/shop.routes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const require = createRequire(import.meta.url);
 
@@ -17,6 +18,7 @@ const Koa = require("koa") as unknown as { new (): KoaApp };
 const app = new Koa();
 const router = new Router();
 
+app.use(errorHandler);
 app.use(bodyParser());
 
 router.get("/health", (ctx: RouterContext) => {
