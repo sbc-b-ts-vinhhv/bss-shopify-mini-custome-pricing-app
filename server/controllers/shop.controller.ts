@@ -4,16 +4,14 @@ import {
   createShop,
   getShopById,
   updateShop,
-  type CreateShopInput,
-  type UpdateShopInput,
 } from "../services/shop.services.js";
 import { toShopDTO } from "../mappers/shop.mapper.js";
 import { AppError } from "../utils/AppError.js";
 import { ok } from "../utils/response.js";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
+import {
+  validateCreateShopInput,
+  validateUpdateShopInput,
+} from "../validators/shop.validator.js";
 
 function toShopId(value: unknown): number | null {
   const id = Number(value);
@@ -34,15 +32,7 @@ export async function getShopController(ctx: RouterContext) {
 }
 
 export async function createShopController(ctx: RouterContext) {
-  if (!isRecord(ctx.request.body)) {
-    throw AppError.badRequest("Request body is required");
-  }
-
-  const body = ctx.request.body as Partial<CreateShopInput>;
-
-  if (!body.shop || !body.token || !body.name) {
-    throw AppError.badRequest("shop, token, and name are required");
-  }
+  const body = validateCreateShopInput(ctx.request.body);
 
   const shop = await createShop({
     shop: body.shop,
@@ -62,11 +52,7 @@ export async function updateShopController(ctx: RouterContext) {
     throw AppError.badRequest("Missing or invalid shop id");
   }
 
-  if (!isRecord(ctx.request.body)) {
-    throw AppError.badRequest("Request body is required");
-  }
-
-  const data = ctx.request.body as UpdateShopInput;
+  const data = validateUpdateShopInput(ctx.request.body);
   const shop = await updateShop(shopId, data);
 
   ok(ctx, toShopDTO(shop));

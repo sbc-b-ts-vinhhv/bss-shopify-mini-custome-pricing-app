@@ -7,16 +7,14 @@ import {
   updateRule,
   duplicateRule,
   deleteRule,
-  type CreateRuleInput,
-  type UpdateRuleInput,
 } from "../services/rule.services.js";
 import { toRuleDTO } from "../mappers/rule.mapper.js";
 import { AppError } from "../utils/AppError.js";
 import { ok, noContent } from "../utils/response.js";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
+import {
+  validateCreateRuleInput,
+  validateUpdateRuleInput,
+} from "../validators/rule.validator.js";
 
 function toId(value: unknown): number | null {
   const id = Number(value);
@@ -25,30 +23,10 @@ function toId(value: unknown): number | null {
 }
 
 export async function createRuleController(ctx: RouterContext) {
-  if (!isRecord(ctx.request.body)) {
-    throw AppError.badRequest("Request body is required");
-  }
-
-  const body = ctx.request.body as Partial<CreateRuleInput>;
-  const shopId = toId(body.shopId);
-
-  if (shopId === null) {
-    throw AppError.badRequest("Missing or invalid shopId");
-  }
-
-  if (
-    !body.name ||
-    !body.productConditionType ||
-    !body.discountType ||
-    body.discountValue === undefined
-  ) {
-    throw AppError.badRequest(
-      "name, productConditionType, discountType, and discountValue are required",
-    );
-  }
+  const body = validateCreateRuleInput(ctx.request.body);
 
   const rule = await createRule({
-    shopId,
+    shopId: body.shopId,
     name: body.name,
     status: body.status,
     priority: body.priority,
@@ -93,11 +71,7 @@ export async function updateRuleController(ctx: RouterContext) {
     throw AppError.badRequest("Missing or invalid rule id");
   }
 
-  if (!isRecord(ctx.request.body)) {
-    throw AppError.badRequest("Request body is required");
-  }
-
-  const data = ctx.request.body as UpdateRuleInput;
+  const data = validateUpdateRuleInput(ctx.request.body);
   const rule = await updateRule(id, data);
 
   ok(ctx, toRuleDTO(rule));
