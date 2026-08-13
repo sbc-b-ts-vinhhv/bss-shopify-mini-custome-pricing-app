@@ -4,7 +4,7 @@ import type {
   HeadersFunction,
   LoaderFunctionArgs,
 } from "react-router";
-import { useFetcher } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import {
   BlockStack,
@@ -20,23 +20,16 @@ import {
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { getShop } from "app/services/shop.service";
+import { useAppDispatch, useAppSelector } from "app/store/hooks";
+import { fetchShop } from "app/store/slices/shopSlice";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-  console.log("session shop: ", session.shop)
 
-//   const responseAdmin = await admin.graphql(`
-//   query {
-//     customers(first: 1) {
-//       nodes {
-//         id
-//         displayName
-//       }
-//     }
-//   }
-// `);
-
-//   const resultAdmin = await responseAdmin.json();
+  if (!session.accessToken) {
+    throw new Error("Access token is missing");
+  }
 
   const response = await admin.graphql(`
     query {
@@ -44,17 +37,32 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         id
         name
       }
-    }
+    }  
   `);
 
   const result = await response.json();
-  if (!session.accessToken) {
-    throw new Error("Access token is missing");
+  const shop = result.data?.shop;
+
+  if (!shop) {
+    throw new Error("Shop information is missin");
   }
 
-  console.log("result: ", result.data?.shop)
+  await fetch(`${process.env.BACKEND_URL}/api/shops/install`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      shopifyId: shop.id,
+      shop: session.shop,
+      token: session.accessToken,
+      name: shop.name,
+    }),
+  });
 
-  return null;
+  return {
+    shopDomain: session.shop,
+  };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -172,6 +180,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function Index() {
   const fetcher = useFetcher<typeof action>();
 
+  // dispatch để gọi fetch shop rồi lưu vào redux
+  const { shopDomain } = useLoaderData<typeof loader>();
+  const dispatch = useAppDispatch();
+
+
   const shopify = useAppBridge();
   const isLoading =
     ["loading", "submitting"].includes(fetcher.state) &&
@@ -182,6 +195,11 @@ export default function Index() {
       shopify.toast.show("Product created");
     }
   }, [fetcher.data?.product?.id, shopify]);
+
+  // useEffect để  fetch
+  useEffect(() => {
+    dispatch(fetchShop(shopDomain));
+  }, [dispatch, shopDomain]);
 
   const generateProduct = () => fetcher.submit({}, { method: "POST" });
 

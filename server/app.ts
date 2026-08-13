@@ -2,9 +2,11 @@ import "dotenv/config";
 import { createRequire } from "node:module";
 import bodyParser from "koa-bodyparser";
 import Router, { type RouterContext } from "@koa/router";
+import cors from "@koa/cors";
 
 import shopRoutes from "./routes/shop.routes.js";
 import ruleRoutes from "./routes/rule.routes.js";
+import webhookRoutes from "./routes/webhook.routes.js"
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const require = createRequire(import.meta.url);
@@ -18,6 +20,8 @@ const Koa = require("koa") as unknown as { new (): KoaApp };
 
 const app = new Koa();
 const router = new Router();
+
+app.use(cors());
 
 app.use(errorHandler);
 app.use(bodyParser());
@@ -38,6 +42,9 @@ app.use(shopRoutes.allowedMethods());
 
 app.use(ruleRoutes.routes());
 app.use(ruleRoutes.allowedMethods());
+
+app.use(webhookRoutes.routes());
+app.use(webhookRoutes.allowedMethods());
 
 const PORT = Number(process.env.PORT) || 3000;
 

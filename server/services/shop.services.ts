@@ -4,6 +4,7 @@ import { AppError } from "../utils/AppError.js";
 export interface CreateShopInput {
   shop: string;
   token: string;
+  shopifyId: string;
   name: string;
   email?: string;
   senderEmail?: string;
@@ -45,4 +46,86 @@ export async function updateShop(id: number, data: UpdateShopInput) {
   await shop.update(data);
 
   return shop;
+}
+
+export async function getShopByShopifyId(shopifyId: string) {
+  const shop = await Shop.findOne({
+    where: {
+      shopifyId,
+    },
+  });
+
+  if (!shop) {
+    throw AppError.notFound("Shop not foun");
+  }
+
+  return shop;
+}
+
+export async function getShopByDomain(domain: string): Promise<Shop> {
+  const shop = await Shop.findOne({
+    where: {
+      shop: domain,
+    },
+  });
+
+  if (!shop) {
+    throw AppError.notFound(`Shop not found: ${domain}`);
+  }
+
+  return shop;
+}
+
+export async function uninstallShop(shopDomain: string) {
+  const shop = await Shop.findOne({
+    where: {
+      shop: shopDomain,
+    },
+  });
+
+  if (!shop) {
+    return null;
+  }
+
+  shop.status = "uninstalled";
+
+  await shop.save();
+
+  return shop;
+}
+
+export async function createOrReactivateShop(input: {
+  shopifyId: string;
+  shop: string;
+  token: string;
+  name: string;
+  email: string | null;
+}) {
+  const existingShop = await Shop.findOne({
+    where: {
+      shop: input.shop,
+    },
+  });
+
+  if (!existingShop) {
+    return Shop.create({
+      shopifyId: input.shopifyId,
+      shop: input.shop,
+      token: input.token,
+      name: input.name,
+      email: input.email,
+      senderEmail: null,
+      status: "active",
+    });
+  }
+
+  existingShop.shopifyId = input.shopifyId;
+  existingShop.token = input.token;
+  existingShop.name = input.name;
+  existingShop.email = input.email;
+  existingShop.status = "active";
+
+  await existingShop.save();
+
+  return existingShop;
 }

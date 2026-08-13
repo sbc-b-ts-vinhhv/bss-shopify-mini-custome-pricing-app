@@ -11,6 +11,11 @@ export async function up({
       autoIncrement: true,
       primaryKey: true,
     },
+    shopifyId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
     shop: {
       type: DataTypes.STRING,
       allowNull: false,

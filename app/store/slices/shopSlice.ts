@@ -17,9 +17,12 @@ const initialState: ShopState = {
   error: null,
 };
 
-export const fetchShop = createAsyncThunk("shop/fetchShop", async () => {
-  return await getShop();
-});
+export const fetchShop = createAsyncThunk(
+  "shop/fetchShop",
+  async (shopDomain: string) => {
+    return getShop(shopDomain);
+  },
+);
 
 export const updateSenderEmail = createAsyncThunk(
   "shop/updateSenderEmail",
@@ -45,9 +48,6 @@ const shopSlice = createSlice({
       .addCase(fetchShop.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message ?? "Failed to load shop";
-      })
-      .addCase(updateSenderEmail.fulfilled, (state, action) => {
-        state.data = action.payload;
       });
   },
 });

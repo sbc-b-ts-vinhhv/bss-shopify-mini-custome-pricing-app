@@ -50,6 +50,7 @@ export function validateCreateShopInput(body: unknown) {
   return body as {
     shop: string;
     token: string;
+    shopifyId: string,
     name: string;
     email?: string;
     senderEmail?: string;

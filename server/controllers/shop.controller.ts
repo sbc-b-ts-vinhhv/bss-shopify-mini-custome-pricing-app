@@ -1,8 +1,11 @@
 import type { RouterContext } from "@koa/router";
 
 import {
+  createOrReactivateShop,
   createShop,
+  getShopByDomain,
   getShopById,
+  getShopByShopifyId,
   updateShop,
 } from "../services/shop.services.js";
 import { toShopDTO } from "../mappers/shop.mapper.js";
@@ -36,6 +39,7 @@ export async function createShopController(ctx: RouterContext) {
 
   const shop = await createShop({
     shop: body.shop,
+    shopifyId: body.shopifyId,
     token: body.token,
     name: body.name,
     email: body.email,
@@ -56,4 +60,47 @@ export async function updateShopController(ctx: RouterContext) {
   const shop = await updateShop(shopId, data);
 
   ok(ctx, toShopDTO(shop));
+}
+
+export async function getShopByShopifyIdController(ctx: RouterContext) {
+  const shopifyId = ctx.query.shopifyId;
+
+  if (typeof shopifyId !== "string" || !shopifyId.trim()) {
+    throw AppError.badRequest("Missing shopiifyId");
+  }
+
+  const shop = await getShopByShopifyId(shopifyId);
+
+  ok(ctx, toShopDTO(shop));
+}
+
+export async function getCurrentShopController(ctx: RouterContext) {
+  const shopDomain = ctx.get("X-Shopify-Shop-Domain");
+  if (!shopDomain) {
+    throw AppError.badRequest("Missing X-Shopify-Shop-Domain");
+  }
+
+  const shop = await getShopByDomain(shopDomain);
+
+  if (!shop) {
+    throw AppError.notFound("Shop not found");
+  }
+
+  ok(ctx, toShopDTO(shop));
+}
+
+export async function createOrReactivateShopController(
+  ctx: RouterContext,
+) {
+  const body = ctx.request.body;
+
+  const shop = await createOrReactivateShop({
+    shopifyId: body.shopifyId,
+    shop: body.shop,
+    token: body.token,
+    name: body.name,
+    email: body.email ?? null,
+  });
+
+  ok(ctx, toShopDTO(shop), 200);
 }

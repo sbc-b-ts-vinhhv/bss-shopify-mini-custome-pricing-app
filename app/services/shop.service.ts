@@ -15,16 +15,25 @@ function toShopModel(shop: ShopResponse): Shop {
     id: shop.id,
     name: shop.name,
     domain: shop.domain,
-    senderEmail: shop.senderEmail ?? "",
   };
 }
 
-export async function getShop(): Promise<Shop> {
+export async function getShop(
+  shopDomain: string,
+): Promise<Shop> {
   if (cachedShop) {
     return { ...cachedShop };
   }
 
-  const shop = await apiRequest<ShopResponse>("/api/shops/1");
+  const shop = await apiRequest<ShopResponse>(
+    "/api/shops/current",
+    {
+      headers: {
+        "X-Shopify-Shop-Domain": shopDomain,
+      },
+    },
+  );
+
   cachedShop = toShopModel(shop);
 
   return { ...cachedShop };
