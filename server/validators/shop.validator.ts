@@ -43,17 +43,12 @@ export function validateCreateShopInput(body: unknown) {
     throw AppError.badRequest("Invalid email");
   }
 
-  if (body.senderEmail !== undefined && !isEmailLike(body.senderEmail)) {
-    throw AppError.badRequest("Invalid senderEmail");
-  }
-
   return body as {
     shop: string;
     token: string;
     shopifyId: string,
     name: string;
     email?: string;
-    senderEmail?: string;
   };
 }
 
@@ -62,7 +57,7 @@ export function validateUpdateShopInput(body: unknown) {
     throw AppError.badRequest("Request body is required");
   }
 
-  const hasAnyField = ["name", "email", "senderEmail"].some((key) =>
+  const hasAnyField = ["name", "email"].some((key) =>
     Object.prototype.hasOwnProperty.call(body, key),
   );
 
@@ -78,13 +73,8 @@ export function validateUpdateShopInput(body: unknown) {
     throw AppError.badRequest("Invalid email");
   }
 
-  if (body.senderEmail !== undefined && !isEmailLike(body.senderEmail)) {
-    throw AppError.badRequest("Invalid senderEmail");
-  }
-
   return body as {
     name?: string;
     email?: string;
-    senderEmail?: string;
   };
 }

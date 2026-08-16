@@ -4,8 +4,8 @@ import {
   createOrReactivateShopController,
   createShopController,
   getCurrentShopController,
-  getShopByShopifyIdController,
   getShopController,
+  syncCurrentShopController,
   updateShopController,
 } from "../controllers/shop.controller.js";
 
@@ -14,7 +14,7 @@ const router = new Router({
 });
 
 router.get("/current", getCurrentShopController);
-router.get("/by-shopify-id", getShopByShopifyIdController);
+router.post("/current/sync", syncCurrentShopController);
 router.post("/", createShopController);
 router.get("/:id", getShopController);
 router.patch("/:id", updateShopController);

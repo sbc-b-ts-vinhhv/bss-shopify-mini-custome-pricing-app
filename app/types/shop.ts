@@ -3,7 +3,3 @@ export interface Shop {
   name: string;
   domain: string;
 }
-
-export interface ShopFormValues {
-  senderEmail: string;
-}

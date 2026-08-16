@@ -5,11 +5,12 @@ import {
   createShop,
   getShopByDomain,
   getShopById,
-  getShopByShopifyId,
   updateShop,
 } from "../services/shop.services.js";
+import { syncShopFromShopify } from "../services/shopify.service.js";
 import { toShopDTO } from "../mappers/shop.mapper.js";
 import { AppError } from "../utils/AppError.js";
+import { requireShopDomain } from "../utils/request.js";
 import { ok } from "../utils/response.js";
 import {
   validateCreateShopInput,
@@ -43,7 +44,6 @@ export async function createShopController(ctx: RouterContext) {
     token: body.token,
     name: body.name,
     email: body.email,
-    senderEmail: body.senderEmail,
   });
 
   ok(ctx, toShopDTO(shop), 201);
@@ -62,29 +62,21 @@ export async function updateShopController(ctx: RouterContext) {
   ok(ctx, toShopDTO(shop));
 }
 
-export async function getShopByShopifyIdController(ctx: RouterContext) {
-  const shopifyId = ctx.query.shopifyId;
+export async function getCurrentShopController(ctx: RouterContext) {
+  const shopDomain = requireShopDomain(ctx);
 
-  if (typeof shopifyId !== "string" || !shopifyId.trim()) {
-    throw AppError.badRequest("Missing shopiifyId");
-  }
-
-  const shop = await getShopByShopifyId(shopifyId);
+  const shop = await getShopByDomain(shopDomain);
 
   ok(ctx, toShopDTO(shop));
 }
 
-export async function getCurrentShopController(ctx: RouterContext) {
-  const shopDomain = ctx.get("X-Shopify-Shop-Domain");
-  if (!shopDomain) {
-    throw AppError.badRequest("Missing X-Shopify-Shop-Domain");
-  }
+/**
+ * Kéo lại thông tin shop từ Shopify (name, email) và ghi đè vào MySQL.
+ */
+export async function syncCurrentShopController(ctx: RouterContext) {
+  const shopDomain = requireShopDomain(ctx);
 
-  const shop = await getShopByDomain(shopDomain);
-
-  if (!shop) {
-    throw AppError.notFound("Shop not found");
-  }
+  const shop = await syncShopFromShopify(shopDomain);
 
   ok(ctx, toShopDTO(shop));
 }

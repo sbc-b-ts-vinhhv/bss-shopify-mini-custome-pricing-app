@@ -1,9 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { Shop, ShopFormValues } from "../../types/shop";
-import {
-  getShop,
-  updateSenderEmail as updateSenderEmailService,
-} from "../../services/shop.service";
+import type { Shop } from "../../types/shop";
+import { getShop } from "../../services/shop.service";
 
 interface ShopState {
   data: Shop | null;
@@ -21,13 +18,6 @@ export const fetchShop = createAsyncThunk(
   "shop/fetchShop",
   async (shopDomain: string) => {
     return getShop(shopDomain);
-  },
-);
-
-export const updateSenderEmail = createAsyncThunk(
-  "shop/updateSenderEmail",
-  async (values: ShopFormValues) => {
-    return await updateSenderEmailService(values);
   },
 );
 

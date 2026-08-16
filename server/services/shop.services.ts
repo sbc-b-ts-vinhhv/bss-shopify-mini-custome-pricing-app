@@ -7,13 +7,11 @@ export interface CreateShopInput {
   shopifyId: string;
   name: string;
   email?: string;
-  senderEmail?: string;
 }
 
 export interface UpdateShopInput {
   name?: string;
   email?: string;
-  senderEmail?: string;
 }
 
 export async function createShop(data: CreateShopInput) {
@@ -44,20 +42,6 @@ export async function updateShop(id: number, data: UpdateShopInput) {
   }
 
   await shop.update(data);
-
-  return shop;
-}
-
-export async function getShopByShopifyId(shopifyId: string) {
-  const shop = await Shop.findOne({
-    where: {
-      shopifyId,
-    },
-  });
-
-  if (!shop) {
-    throw AppError.notFound("Shop not foun");
-  }
 
   return shop;
 }
@@ -114,7 +98,6 @@ export async function createOrReactivateShop(input: {
       token: input.token,
       name: input.name,
       email: input.email,
-      senderEmail: null,
       status: "active",
     });
   }

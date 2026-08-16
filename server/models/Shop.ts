@@ -23,7 +23,6 @@ export class Shop extends Model<
 
   declare name: string;
   declare email: string | null;
-  declare senderEmail: string | null;
 
   declare status: CreationOptional<ShopStatus>;
 
@@ -61,11 +60,6 @@ Shop.init(
     },
 
     email: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-
-    senderEmail: {
       type: DataTypes.STRING,
       allowNull: true,
     },

@@ -22,7 +22,6 @@ import {
 } from "@shopify/polaris";
 import { SearchIcon } from "@shopify/polaris-icons";
 import { usePricingPreview } from "app/hooks/usePricingPreview";
-import { mockProducts } from "app/mocks/mock-data";
 import {
   CPRule,
   DiscountType,
@@ -40,6 +39,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import styles from "./RuleForm.module.css";
 import { useProductTags } from "app/hooks/useProductTags";
+import { useProducts } from "app/hooks/useProducts";
 
 type RuleFormMode = "create" | "edit";
 
@@ -77,6 +77,8 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
     error: tagsError,
     registerTag,
   } = useProductTags();
+
+  const { products, loading: productsLoading } = useProducts();
 
   useEffect(() => {
     setValues(toFormValues(initialRule));
@@ -121,7 +123,7 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
     };
   }, [initialRule, mode, values]);
 
-  const previewRows = usePricingPreview(previewRule, mockProducts);
+  const previewRows = usePricingPreview(previewRule, products);
 
   const submitValues = async () => {
     setSubmitting(true);
@@ -451,6 +453,7 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                             plural: "products",
                           }}
                           itemCount={previewRows.length}
+                          loading={productsLoading}
                           selectable={false}
                           headings={[
                             { title: "ID" },

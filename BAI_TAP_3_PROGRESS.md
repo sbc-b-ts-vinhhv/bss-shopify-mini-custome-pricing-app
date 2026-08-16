@@ -18,15 +18,49 @@
 | 6 | Validation | Validator cho Rule (name, status, productConditionType, tags, discountType, discountValue) và Shop | ✅ Done — `server/validators/{rule,shop}.validator.ts`, đã wire vào cả 2 controller |
 | 7 | Kết nối Frontend | `app/services/rules.service.ts`, `app/services/shop.service.ts` gọi API thật thay vì mock | ✅ Done (còn `products.service.ts` chưa xong — xem Task 9) |
 | 8 | Test bằng curl/Postman | Theo checklist mục 44-45 trong `CLAUDE_TASK.md` | ✅ Done (test thủ công; **chưa có test tự động**, `package.json` không có script `test`) |
-| 9 | Shopify GraphQL Admin API | Service lấy Shop info (email, name), Product (title, tags, price), Customer — dùng cho pricing & sync | ⏳ **Todo** |
+| 9 | Shopify GraphQL Admin API | Shop info + sync (Koa), Product + Product tags (app layer) | ✅ Done — chờ verify bằng `npm run dev` |
+
+## Phạm vi đã chốt cho Bài 3
+
+Backend chỉ cần: **lưu shop + rule của shop, và lấy product + product tags qua GraphQL để hiển thị trong RuleForm.** Không làm gì ngoài phạm vi này.
+
+Đã xoá vì không phục vụ phạm vi trên:
+
+- `app/routes/api.customers.tsx` — model `rules` không có chiều customer nào, `utils/pricing.ts` chỉ match theo product tags. Customer chỉ là móng cho pricing theo segment (mục 31.3) và cái cớ để đi qua quy trình Protected Customer Data (mục 6). Khi nào rule thật sự cần điều kiện customer thì dựng lại.
+- `GET /api/shops/by-shopify-id` (route + controller + `getShopByShopifyId`) — không có trong đề bài, frontend không gọi.
+- `app/mocks/mock-data.ts`, `app/services/delay.ts` — frontend đã chạy hoàn toàn trên API thật.
+- **Toàn bộ Sender Email** — không làm tính năng này. Đã gỡ: cột `sender_email` (migration `20260816000001-remove-shops-sender-email.ts`), field trong model/mapper/validator/service, `ShopFormValues`, `updateSenderEmail` ở service + Redux thunk, `saveSenderEmail` trong `useShopSettings`, và route `PATCH /api/shops/current` (route này sinh ra chỉ để phục vụ sender email).
+  > ⚠️ Đây là **quyết định có ý thức, chấp nhận mất điểm**: đề bài yêu cầu sender email ở mục 12, checklist mục 46 ("Sender email lưu được vào MySQL") và mục 52. Đừng "sửa lại" ở session sau nếu không có yêu cầu mới.
+
+**Không dùng nhưng cố ý giữ:**
+
+| Code | Vì sao giữ |
+|---|---|
+| `POST /api/shops`, `GET /api/shops/:id` | Đề bài mục 18 + checklist mục 46 ("Create Shop hoạt động", "Read Shop hoạt động") yêu cầu đúng 2 endpoint này. Frontend không gọi, test bằng curl. |
+| `server/config/shopify.ts`, `server/services/shopify.service.ts`, `POST /api/shops/current/sync` | Webhook `shop/update` và việc đẩy rules lên Metafields ở Bài 4 chạy khi không có session merchant → bắt buộc đọc token từ bảng `shops`. |
+| `server/routes/webhook.routes.ts`, `webhook.controller.ts`, `uninstallShop()` | Khung cho Bài 4. Lưu ý: hiện **chưa được Shopify gọi** — xem mục Bài 4 bên dưới. |
+
+## ⚠️ Ranh giới: gọi Shopify ở Koa hay ở app layer?
+
+Quy ước đã chốt, **đừng làm ngược lại ở session sau**:
+
+| Loại dữ liệu | Gọi ở đâu | Vì sao |
+|---|---|---|
+| Read-only cho UI (product, product tags, customer) | **App layer** — resource route `app/routes/api.*.tsx` dùng `authenticate.admin` | Luôn có session merchant, không lưu gì xuống DB. Đi qua Koa chỉ thêm 1 hop và một đống mapper/controller vô ích. |
+| Không có session merchant (webhook, đẩy metafields, sync shop) | **Koa** — `server/config/shopify.ts` + `server/services/shopify.service.ts`, token đọc từ bảng `shops` | Webhook Shopify bắn vào lúc không ai mở app, bắt buộc lấy token từ DB. |
+
+Route static (`/api/products`, `/api/customers`, `/api/product-tags`) luôn thắng splat `api.$.tsx`;
+mọi path khác (`/api/rules`, `/api/shops/*`) vẫn được proxy sang Koa như cũ.
+
+**Thêm route resource mới thì phải restart `npm run dev`** — `app/routes.ts` dùng `flatRoutes()`, danh sách route sinh ở thời điểm config nên Vite không hot-reload được.
 
 ## Việc còn thiếu / cần sửa (đối chiếu code ngày 2026-08-16)
 
 ### Bài 3 — còn lại
 
-- **Task 9 — GraphQL Admin API (chưa làm).** Chưa có `server/services/shopify.service.ts`. Hiện chỉ có đúng 1 query inline `shop { id name }` trong loader `app/routes/app._index.tsx`. Chưa có Product, chưa có Customer.
-- **Product vẫn dùng mock.** `app/services/products.service.ts` và `app/components/RuleForm/RuleForm.tsx` vẫn import `mockProducts` từ `app/mocks/mock-data`. → Tiêu chí mục 46 "Frontend không còn phụ thuộc mock data" chưa đạt cho phần Product Pricing Details. Phải làm sau khi có Task 9.
-- **Bug hard-code shop id.** `app/services/shop.service.ts` PATCH thẳng vào `/api/shops/1`. Nếu shop có id khác thì update sender email sẽ ghi sai shop. Cách sửa: dùng id trả về từ `getShop()`, hoặc thêm route `PATCH /api/shops/current` (nhận `X-Shopify-Shop-Domain` giống `GET /api/shops/current`).
+- **`package.json` còn 2 script chết**: `dev:server:sync-db`, `dev:server:test-db` trỏ tới file đã xoá.
+
+> `app/mocks/mock-data.ts` và `app/services/delay.ts` đã được xoá sau Task 9 — toàn bộ frontend đã chạy trên API thật, `npx tsc --noEmit` sạch 0 lỗi.
 - **AfterAuth chưa đúng chỗ.** Việc tạo shop đang nằm trong `loader` của `app/routes/app._index.tsx` (gọi `POST /api/shops/install`), nghĩa là chạy lại mỗi lần merchant mở trang Home, không phải hook afterAuth. Chạy được nhưng lệch yêu cầu mục 5 của đề bài.
 - **Chưa có test tự động** cho checklist mục 44 (Shop CRUD, Rule CRUD, các case validation).
 
@@ -40,11 +74,10 @@
 
 ### Thứ tự đề xuất làm tiếp
 
-1. Task 9 — `server/services/shopify.service.ts` (GraphQL: shop / products / customers).
-2. Thay mock trong `products.service.ts` + `RuleForm.tsx` bằng API thật.
-3. Fix hard-code `/api/shops/1`.
-4. Bài 4 — nối webhook `app/uninstalled` về Koa + thêm `shop/update` + verify HMAC.
-5. Bài 4 — Metafields + Theme App Extension pricing trên PDP + money format.
+1. Chạy `npm run db:migrate` để drop cột `sender_email`.
+2. Gỡ 2 script chết trong `package.json`.
+3. Bài 4 — nối webhook `app/uninstalled` về Koa + thêm `shop/update` (gọi `syncShopFromShopify`) + verify HMAC.
+4. Bài 4 — Metafields + Theme App Extension pricing trên PDP + money format.
 
 ## Bối cảnh quan trọng đã xác nhận (không cần phân tích lại)
 
@@ -57,18 +90,21 @@
   server/
   ├── app.ts                  (Koa + cors + errorHandler + bodyParser + routes, cổng API_PORT mặc định 8080)
   ├── migrate.ts
-  ├── config/database.ts
+  ├── config/{database,shopify}.ts
   ├── models/{Shop,Rule}.ts
   ├── migrations/2026081300000{1,2}-create-{shops,rules}.ts
   ├── routes/{shop,rule,webhook}.routes.ts
   ├── controllers/{shop,rule,webhook}.controller.ts
-  ├── services/{shop,rule}.services.ts
+  ├── services/{shop,rule}.services.ts + shopify.service.ts
   ├── validators/{shop,rule}.validator.ts
   ├── mappers/{shop,rule}.mapper.ts
   ├── middleware/errorHandler.ts
-  └── utils/{AppError,response}.ts
+  └── utils/{AppError,response,request}.ts
   ```
-- Route Shop hiện có: `GET /api/shops/current`, `GET /api/shops/by-shopify-id`, `POST /api/shops`, `GET /api/shops/:id`, `PATCH /api/shops/:id`, `POST /api/shops/install`.
+- Route Shop hiện có: `GET /api/shops/current`, `POST /api/shops/current/sync`, `POST /api/shops`, `GET /api/shops/:id`, `PATCH /api/shops/:id`, `POST /api/shops/install`.
+- **Frontend chỉ đọc shop qua `GET /api/shops/current`**, không truyền shop id. Shop được xác định từ session Shopify (proxy `api.$.tsx` gắn header `X-Shopify-Shop-Domain`). Nhóm `/:id` không được frontend gọi, chỉ giữ để thoả mục 18 + checklist mục 46 và test bằng curl.
+- Resource route ở app layer: `app/routes/api.products.tsx`, `api.product-tags.tsx` — dùng `authenticate.admin` + `admin.graphql`, trả về cùng format `{success, data}` để `apiRequest` bóc vỏ như API của Koa.
+- `SHOPIFY_API_VERSION=2026-07` trong `.env` (khớp `ApiVersion.July26` ở `app/shopify.server.ts`). Query GraphQL đã được validate với schema version này.
 - Frontend gọi API qua `app/services/api-client.ts` (`apiRequest`), base URL lấy từ env `VITE_API_BASE_URL`; backend URL phía server dùng `process.env.BACKEND_URL`.
 
 ## Cách dùng file này ở session mới

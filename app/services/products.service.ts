@@ -1,12 +1,12 @@
-import { mockProducts } from "../mocks/mock-data";
 import type { Product } from "../types/product";
-import { delay } from "./delay";
+import { apiRequest } from "./api-client";
 
 export async function getProducts(): Promise<Product[]> {
-  return delay(mockProducts);
+  return apiRequest<Product[]>("/api/products");
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-  const product = mockProducts.find((item) => item.id === id);
-  return delay(product);
+  const products = await getProducts();
+
+  return products.find((item) => item.id === id);
 }
