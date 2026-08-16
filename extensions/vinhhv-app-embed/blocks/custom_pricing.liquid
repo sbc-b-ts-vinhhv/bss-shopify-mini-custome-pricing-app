@@ -1,0 +1,43 @@
+{% comment %}
+  App embed block chạy trên MỌI trang (target: body), nên phải tự chặn — chỉ
+  PDP mới có product để tính lại giá.
+
+  Data đi sang JS qua thẻ <script type="application/json"> chứ không nối chuỗi
+  Liquid vào giữa JS: tên sản phẩm / tag có dấu nháy sẽ làm vỡ script.
+{% endcomment %}
+{% if template.name == 'product' and product %}
+  <script type="application/json" id="cp-data">
+    {
+      "productId": {{ product.id | json }},
+      "tags": {{ product.tags | json }},
+      "moneyFormat": {{ shop.money_format | json }},
+      "priceSelector": {{ block.settings.price_selector | json }},
+      "currentVariantId": {{ product.selected_or_first_available_variant.id | json }},
+      "variants": [
+        {%- for variant in product.variants -%}
+          {"id": {{ variant.id | json }}, "price": {{ variant.price | json }}}
+          {%- unless forloop.last %},{% endunless -%}
+        {%- endfor -%}
+      ],
+      "rules": {{ app.metafields.custom_pricing.rules.value | json }}
+    }
+  </script>
+
+  <script src="{{ 'custom-pricing.js' | asset_url }}" defer></script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Custom Pricing",
+  "target": "body",
+  "settings": [
+    {
+      "type": "text",
+      "id": "price_selector",
+      "label": "Price selector",
+      "info": "CSS selector của vùng giá trên trang sản phẩm. Điền nhiều selector cách nhau bằng dấu phẩy thì sẽ thử lần lượt cho tới khi trúng. Để trống để tự dò theo các theme phổ biến.",
+      "default": ""
+    }
+  ]
+}
+{% endschema %}

@@ -11,6 +11,7 @@ import {
   fetchShopInfoWithToken,
   syncShopFromShopify,
 } from "../services/shopify.service.js";
+import { safeSyncRulesToMetafield } from "../services/metafield.service.js";
 import { toShopDTO } from "../mappers/shop.mapper.js";
 import { AppError } from "../utils/AppError.js";
 import { requireShopDomain } from "../utils/request.js";
@@ -106,6 +107,11 @@ export async function installShopController(ctx: RouterContext) {
     email: info.email,
     ownerName: info.shopOwnerName,
   });
+
+  // Cài lại app = AppInstallation mới = mất sạch app-data metafield của lần cài
+  // trước, trong khi rules vẫn còn nguyên trong MySQL. Không đẩy lại ở đây thì
+  // storefront im lặng hết giảm giá cho tới khi có người backfill tay.
+  await safeSyncRulesToMetafield(shop.id);
 
   ok(ctx, toShopDTO(shop));
 }

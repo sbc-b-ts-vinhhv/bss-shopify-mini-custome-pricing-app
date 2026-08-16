@@ -9,7 +9,10 @@ export function formatMoney(value: number): string {
   }).format(value);
 }
 
-export function calculateModifiedPrice(originalPrice: number, rule: CPRule): number {
+export function calculateModifiedPrice(
+  originalPrice: number,
+  rule: CPRule,
+): number {
   const discount = rule.discount;
 
   if (discount.type === "FIXED_PRICE") {
@@ -26,18 +29,25 @@ export function calculateModifiedPrice(originalPrice: number, rule: CPRule): num
   return Math.max(0, discounted);
 }
 
-export function getApplicableProducts(products: Product[], rule: CPRule): Product[] {
+export function getApplicableProducts(
+  products: Product[],
+  rule: CPRule,
+): Product[] {
   if (rule.productCondition.type === "ALL") {
     return products;
   }
 
-  const tags = rule.productCondition.tags;
+  // Chuẩn hoá y hệt extensions/vinhhv-app-embed/assets/custom-pricing.js —
+  // lệch quy tắc ở đây là admin và storefront báo hai giá khác nhau.
+  const tags = rule.productCondition.tags.map((tag) =>
+    tag.trim().toLowerCase(),
+  );
 
   if (!tags.length) {
     return [];
   }
 
   return products.filter((product) =>
-    product.tags.some((tag) => tags.includes(tag)),
+    product.tags.some((tag) => tags.includes(tag.trim().toLowerCase())),
   );
 }
