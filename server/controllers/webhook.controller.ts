@@ -1,19 +1,18 @@
-import { RouterContext } from "@koa/router";
-import { uninstallShop } from "server/services/shop.services.js";
-import { AppError } from "server/utils/AppError.js";
+import type { RouterContext } from "@koa/router";
 
-export async function appUninstalledController(
-  ctx: RouterContext,
-) {
-  const shopDomain = ctx.get("X-Shopify-Shop-Domain");
+import { uninstallShop } from "../services/shop.services.js";
+import { requireShopDomain } from "../utils/request.js";
+import { ok } from "../utils/response.js";
 
-  if (!shopDomain) {
-    throw AppError.badRequest(
-      "Missing Shopify shop domain",
-    );
-  }
+/**
+ * Shopify có thể bắn lại webhook nhiều lần, kể cả sau khi shop đã bị gỡ khỏi
+ * DB. Controller này vì vậy idempotent: shop không tồn tại vẫn trả 200, để
+ * Shopify không retry rồi cuối cùng huỷ đăng ký webhook.
+ */
+export async function appUninstalledController(ctx: RouterContext) {
+  const shopDomain = requireShopDomain(ctx);
 
-  await uninstallShop(shopDomain);
+  const shop = await uninstallShop(shopDomain);
 
-  ctx.status = 200;
+  ok(ctx, { shop: shopDomain, uninstalled: shop !== null });
 }
