@@ -4,7 +4,7 @@ import type {
   HeadersFunction,
   LoaderFunctionArgs,
 } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useFetcher } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import {
   BlockStack,
@@ -20,9 +20,6 @@ import {
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { getShop } from "app/services/shop.service";
-import { useAppDispatch, useAppSelector } from "app/store/hooks";
-import { fetchShop } from "app/store/slices/shopSlice";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -180,11 +177,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function Index() {
   const fetcher = useFetcher<typeof action>();
 
-  // dispatch để gọi fetch shop rồi lưu vào redux
-  const { shopDomain } = useLoaderData<typeof loader>();
-  const dispatch = useAppDispatch();
-
-
   const shopify = useAppBridge();
   const isLoading =
     ["loading", "submitting"].includes(fetcher.state) &&
@@ -195,11 +187,6 @@ export default function Index() {
       shopify.toast.show("Product created");
     }
   }, [fetcher.data?.product?.id, shopify]);
-
-  // useEffect để  fetch
-  useEffect(() => {
-    dispatch(fetchShop(shopDomain));
-  }, [dispatch, shopDomain]);
 
   const generateProduct = () => fetcher.submit({}, { method: "POST" });
 

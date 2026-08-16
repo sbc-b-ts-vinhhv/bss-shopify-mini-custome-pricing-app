@@ -46,8 +46,9 @@ app.use(ruleRoutes.allowedMethods());
 app.use(webhookRoutes.routes());
 app.use(webhookRoutes.allowedMethods());
 
-const PORT = Number(process.env.PORT) || 3000;
+// Cổng riêng của Koa. Không dùng PORT vì Vite/Shopify CLI cũng đọc biến đó.
+const API_PORT = Number(process.env.API_PORT) || 8080;
 
-app.listen(PORT, () => {
-  console.log(`🚀 API server running at http://localhost:${PORT}`);
+app.listen(API_PORT, () => {
+  console.log(`🚀 API server running at http://localhost:${API_PORT}`);
 });

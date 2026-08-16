@@ -1,5 +1,4 @@
 import type { CPRule, RuleFormValues } from "../types/rule";
-import { getShop } from "./shop.service";
 import { apiRequest } from "./api-client";
 
 type RuleResponse = CPRule;

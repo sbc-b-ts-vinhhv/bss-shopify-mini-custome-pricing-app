@@ -12,17 +12,33 @@ import { Frame, Navigation } from "@shopify/polaris";
 
 import { authenticate } from "../shopify.server";
 import { NavMenu } from "@shopify/app-bridge-react";
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchShop } from "../store/slices/shopSlice";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
-  // eslint-disable-next-line no-undef
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+  return {
+    // eslint-disable-next-line no-undef
+    apiKey: process.env.SHOPIFY_API_KEY || "",
+    shopDomain: session.shop,
+  };
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, shopDomain } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
+  const dispatch = useAppDispatch();
+  const shopStatus = useAppSelector((state) => state.shop.status);
+
+  // Mọi route con của /app đều cần shopId trong store (ví dụ khi tạo rule),
+  // nên nạp shop ở layout thay vì ở từng trang.
+  useEffect(() => {
+    if (shopStatus === "idle") {
+      dispatch(fetchShop(shopDomain));
+    }
+  }, [dispatch, shopDomain, shopStatus]);
 
   return (
     <AppProvider embedded apiKey={apiKey}>
