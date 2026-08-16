@@ -78,10 +78,6 @@ export function validateCreateRuleInput(body: unknown) {
     throw AppError.badRequest("Request body is required");
   }
 
-  if (!isFiniteNumber(body.shopId) || body.shopId <= 0) {
-    throw AppError.badRequest("shopId is required and must be a positive number");
-  }
-
   if (!isNonEmptyString(body.name)) {
     throw AppError.badRequest("name is required");
   }
@@ -133,7 +129,6 @@ export function validateCreateRuleInput(body: unknown) {
   }
 
   return body as {
-    shopId: number;
     name: string;
     status?: RuleStatus;
     priority?: number;

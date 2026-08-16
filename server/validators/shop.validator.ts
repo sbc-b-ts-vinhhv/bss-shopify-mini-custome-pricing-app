@@ -35,6 +35,10 @@ export function validateCreateShopInput(body: unknown) {
     throw AppError.badRequest("token is required");
   }
 
+  if (!isNonEmptyString(body.shopifyId)) {
+    throw AppError.badRequest("shopifyId is required");
+  }
+
   if (!isNonEmptyString(body.name)) {
     throw AppError.badRequest("name is required");
   }
@@ -46,7 +50,7 @@ export function validateCreateShopInput(body: unknown) {
   return body as {
     shop: string;
     token: string;
-    shopifyId: string,
+    shopifyId: string;
     name: string;
     email?: string;
   };
@@ -77,4 +81,16 @@ export function validateUpdateShopInput(body: unknown) {
     name?: string;
     email?: string;
   };
+}
+
+export function validateInstallShopInput(body: unknown) {
+  if (!isRecord(body)) {
+    throw AppError.badRequest("Request body is required");
+  }
+
+  if (!isNonEmptyString(body.token)) {
+    throw AppError.badRequest("token is required");
+  }
+
+  return body as { token: string };
 }

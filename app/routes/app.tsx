@@ -20,14 +20,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
 
   return {
-    // eslint-disable-next-line no-undef
     apiKey: process.env.SHOPIFY_API_KEY || "",
-    shopDomain: session.shop,
   };
 };
 
 export default function App() {
-  const { apiKey, shopDomain } = useLoaderData<typeof loader>();
+  const { apiKey } = useLoaderData<typeof loader>();
   const { pathname } = useLocation();
   const dispatch = useAppDispatch();
   const shopStatus = useAppSelector((state) => state.shop.status);
@@ -36,22 +34,20 @@ export default function App() {
   // nên nạp shop ở layout thay vì ở từng trang.
   useEffect(() => {
     if (shopStatus === "idle") {
-      dispatch(fetchShop(shopDomain));
+      dispatch(fetchShop());
     }
-  }, [dispatch, shopDomain, shopStatus]);
+  }, [dispatch, shopStatus]);
 
   return (
     <AppProvider embedded apiKey={apiKey}>
       <Frame>
         <NavMenu>
-        <Link to="/app" rel="home">
-          Home
-        </Link>
+          <Link to="/app" rel="home">
+            Home
+          </Link>
 
-        <Link to="/app/rules">
-          Rules
-        </Link>
-      </NavMenu>
+          <Link to="/app/rules">Rules</Link>
+        </NavMenu>
         <Outlet />
       </Frame>
     </AppProvider>

@@ -7,13 +7,17 @@ import {
   getShopById,
   updateShop,
 } from "../services/shop.services.js";
-import { syncShopFromShopify } from "../services/shopify.service.js";
+import {
+  fetchShopInfoWithToken,
+  syncShopFromShopify,
+} from "../services/shopify.service.js";
 import { toShopDTO } from "../mappers/shop.mapper.js";
 import { AppError } from "../utils/AppError.js";
 import { requireShopDomain } from "../utils/request.js";
 import { ok } from "../utils/response.js";
 import {
   validateCreateShopInput,
+  validateInstallShopInput,
   validateUpdateShopInput,
 } from "../validators/shop.validator.js";
 
@@ -81,18 +85,27 @@ export async function syncCurrentShopController(ctx: RouterContext) {
   ok(ctx, toShopDTO(shop));
 }
 
-export async function createOrReactivateShopController(
-  ctx: RouterContext,
-) {
-  const body = ctx.request.body;
+/**
+ * Được afterAuth gọi ngay sau khi merchant cài / re-auth app.
+ *
+ * Shop domain lấy từ header do afterAuth gắn, KHÔNG lấy từ body — body chỉ
+ * mang access token. shopifyId/name/email hỏi thẳng Shopify bằng token vừa
+ * nhận, nên không có field nào của payload được tin.
+ */
+export async function installShopController(ctx: RouterContext) {
+  const shopDomain = requireShopDomain(ctx);
+  const { token } = validateInstallShopInput(ctx.request.body);
+
+  const info = await fetchShopInfoWithToken(shopDomain, token);
 
   const shop = await createOrReactivateShop({
-    shopifyId: body.shopifyId,
-    shop: body.shop,
-    token: body.token,
-    name: body.name,
-    email: body.email ?? null,
+    shopifyId: info.id,
+    shop: shopDomain,
+    token,
+    name: info.name,
+    email: info.email,
+    ownerName: info.shopOwnerName,
   });
 
-  ok(ctx, toShopDTO(shop), 200);
+  ok(ctx, toShopDTO(shop));
 }

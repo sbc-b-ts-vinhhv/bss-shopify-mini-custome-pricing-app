@@ -1,6 +1,6 @@
 .formShell {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 200px minmax(0, 1fr);
   gap: 16px 20px;
   padding: 20px;
   background: linear-gradient(180deg, rgba(248, 248, 249, 0.96), rgba(255, 255, 255, 1));

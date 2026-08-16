@@ -55,14 +55,14 @@ export async function createRule(data: CreateRuleInput) {
   });
 }
 
-export async function listRules(shopId?: number) {
-  const where = shopId ? { shopId } : undefined;
-
-  return Rule.findAll({ where, order: [["priority", "DESC"]] });
+export async function listRules(shopId: number) {
+  return Rule.findAll({ where: { shopId }, order: [["priority", "DESC"]] });
 }
 
-export async function getRuleById(id: number) {
-  const rule = await Rule.findByPk(id);
+// Mọi truy vấn theo id đều đi qua đây, nên không có đường nào đọc/sửa được
+// rule của shop khác — kể cả khi client đoán đúng id.
+export async function getRuleById(id: number, shopId: number) {
+  const rule = await Rule.findOne({ where: { id, shopId } });
 
   if (!rule) {
     throw AppError.notFound("Rule not found");
@@ -71,12 +71,12 @@ export async function getRuleById(id: number) {
   return rule;
 }
 
-export async function updateRule(id: number, data: UpdateRuleInput) {
-  const rule = await Rule.findByPk(id);
-
-  if (!rule) {
-    throw AppError.notFound("Rule not found");
-  }
+export async function updateRule(
+  id: number,
+  shopId: number,
+  data: UpdateRuleInput,
+) {
+  const rule = await getRuleById(id, shopId);
 
   // discountType có thể không nằm trong payload, khi đó phải đối chiếu với giá trị đang lưu.
   if (data.discountValue !== undefined) {
@@ -98,12 +98,8 @@ export async function updateRule(id: number, data: UpdateRuleInput) {
   return rule;
 }
 
-export async function duplicateRule(id: number) {
-  const rule = await Rule.findByPk(id);
-
-  if (!rule) {
-    throw AppError.notFound("Rule not found");
-  }
+export async function duplicateRule(id: number, shopId: number) {
+  const rule = await getRuleById(id, shopId);
 
   return Rule.create({
     shopId: rule.shopId,
@@ -119,12 +115,8 @@ export async function duplicateRule(id: number) {
   });
 }
 
-export async function deleteRule(id: number) {
-  const rule = await Rule.findByPk(id);
-
-  if (!rule) {
-    throw AppError.notFound("Rule not found");
-  }
+export async function deleteRule(id: number, shopId: number) {
+  const rule = await getRuleById(id, shopId);
 
   await rule.destroy();
 }

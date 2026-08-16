@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   ChoiceList,
-  ChoiceListProps,
   Collapsible,
   Icon,
   IndexTable,
@@ -37,9 +36,9 @@ import {
 } from "app/utils/rule-display";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import styles from "./RuleForm.module.css";
 import { useProductTags } from "app/hooks/useProductTags";
 import { useProducts } from "app/hooks/useProducts";
+import styles from "./RuleForm.module.css";
 
 type RuleFormMode = "create" | "edit";
 
@@ -252,7 +251,7 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
       ]}
     >
       <Box paddingBlockEnd={"800"}>
-        <BlockStack gap="500">
+        <BlockStack gap="200">
           <Card padding="0">
             <div className={styles.formShell}>
               <div className={styles.sectionLabel}>

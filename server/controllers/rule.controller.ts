@@ -8,8 +8,10 @@ import {
   duplicateRule,
   deleteRule,
 } from "../services/rule.services.js";
+import { getShopByDomain } from "../services/shop.services.js";
 import { toRuleDTO } from "../mappers/rule.mapper.js";
 import { AppError } from "../utils/AppError.js";
+import { requireShopDomain } from "../utils/request.js";
 import { ok, noContent } from "../utils/response.js";
 import {
   validateCreateRuleInput,
@@ -22,11 +24,32 @@ function toId(value: unknown): number | null {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+/**
+ * shopId KHÔNG bao giờ đến từ client. Nó suy ra từ shop domain mà proxy
+ * `app/routes/api.$.tsx` gắn vào từ session Shopify.
+ */
+async function requireShopId(ctx: RouterContext): Promise<number> {
+  const shop = await getShopByDomain(requireShopDomain(ctx));
+
+  return shop.id;
+}
+
+function requireRuleId(ctx: RouterContext): number {
+  const id = toId(ctx.params.id);
+
+  if (id === null) {
+    throw AppError.badRequest("Missing or invalid rule id");
+  }
+
+  return id;
+}
+
 export async function createRuleController(ctx: RouterContext) {
+  const shopId = await requireShopId(ctx);
   const body = validateCreateRuleInput(ctx.request.body);
 
   const rule = await createRule({
-    shopId: body.shopId,
+    shopId,
     name: body.name,
     status: body.status,
     priority: body.priority,
@@ -41,62 +64,42 @@ export async function createRuleController(ctx: RouterContext) {
 }
 
 export async function listRulesController(ctx: RouterContext) {
-  const shopId = ctx.query.shopId ? toId(ctx.query.shopId) : undefined;
+  const shopId = await requireShopId(ctx);
 
-  if (ctx.query.shopId && shopId === null) {
-    throw AppError.badRequest("Invalid shopId");
-  }
-
-  const rules = await listRules(shopId ?? undefined);
+  const rules = await listRules(shopId);
 
   ok(ctx, rules.map(toRuleDTO));
 }
 
 export async function getRuleController(ctx: RouterContext) {
-  const id = toId(ctx.params.id);
+  const shopId = await requireShopId(ctx);
 
-  if (id === null) {
-    throw AppError.badRequest("Missing or invalid rule id");
-  }
-
-  const rule = await getRuleById(id);
+  const rule = await getRuleById(requireRuleId(ctx), shopId);
 
   ok(ctx, toRuleDTO(rule));
 }
 
 export async function updateRuleController(ctx: RouterContext) {
-  const id = toId(ctx.params.id);
-
-  if (id === null) {
-    throw AppError.badRequest("Missing or invalid rule id");
-  }
-
+  const shopId = await requireShopId(ctx);
   const data = validateUpdateRuleInput(ctx.request.body);
-  const rule = await updateRule(id, data);
+
+  const rule = await updateRule(requireRuleId(ctx), shopId, data);
 
   ok(ctx, toRuleDTO(rule));
 }
 
 export async function duplicateRuleController(ctx: RouterContext) {
-  const id = toId(ctx.params.id);
+  const shopId = await requireShopId(ctx);
 
-  if (id === null) {
-    throw AppError.badRequest("Missing or invalid rule id");
-  }
-
-  const rule = await duplicateRule(id);
+  const rule = await duplicateRule(requireRuleId(ctx), shopId);
 
   ok(ctx, toRuleDTO(rule), 201);
 }
 
 export async function deleteRuleController(ctx: RouterContext) {
-  const id = toId(ctx.params.id);
+  const shopId = await requireShopId(ctx);
 
-  if (id === null) {
-    throw AppError.badRequest("Missing or invalid rule id");
-  }
-
-  await deleteRule(id);
+  await deleteRule(requireRuleId(ctx), shopId);
 
   noContent(ctx);
 }

@@ -8,6 +8,7 @@ const SHOP_INFO_QUERY = `#graphql
       id
       name
       email
+      shopOwnerName
       myshopifyDomain
       currencyCode
       ianaTimezone
@@ -19,9 +20,28 @@ export interface ShopifyShopInfo {
   id: string;
   name: string;
   email: string | null;
+  shopOwnerName: string | null;
   myshopifyDomain: string;
   currencyCode: string;
   ianaTimezone: string;
+}
+
+/**
+ * Gọi Shopify bằng token truyền thẳng vào.
+ *
+ * Dùng ở luồng install: lúc đó shop chưa chắc có row trong DB để đọc token ra.
+ */
+export async function fetchShopInfoWithToken(
+  shopDomain: string,
+  accessToken: string,
+): Promise<ShopifyShopInfo> {
+  const data = await shopifyGraphql<{ shop: ShopifyShopInfo }>(
+    shopDomain,
+    accessToken,
+    SHOP_INFO_QUERY,
+  );
+
+  return data.shop;
 }
 
 /**
@@ -31,29 +51,16 @@ export interface ShopifyShopInfo {
  * Dữ liệu read-only phục vụ UI thì gọi thẳng từ resource route của app bằng
  * `authenticate.admin` cho ngắn — xem `app/routes/api.products.tsx`.
  */
-async function queryShopify<T>(
+export async function fetchShopInfo(
   shopDomain: string,
-  query: string,
-  variables: Record<string, unknown> = {},
-): Promise<T> {
+): Promise<ShopifyShopInfo> {
   const shop = await getShopByDomain(shopDomain);
 
   if (shop.status === "uninstalled") {
     throw new AppError("The app is no longer installed on this shop", 409);
   }
 
-  return shopifyGraphql<T>(shop.shop, shop.token, query, variables);
-}
-
-export async function fetchShopInfo(
-  shopDomain: string,
-): Promise<ShopifyShopInfo> {
-  const data = await queryShopify<{ shop: ShopifyShopInfo }>(
-    shopDomain,
-    SHOP_INFO_QUERY,
-  );
-
-  return data.shop;
+  return fetchShopInfoWithToken(shop.shop, shop.token);
 }
 
 /**
@@ -67,6 +74,7 @@ export async function syncShopFromShopify(shopDomain: string) {
   shop.shopifyId = info.id;
   shop.name = info.name;
   shop.email = info.email;
+  shop.ownerName = info.shopOwnerName;
 
   await shop.save();
 

@@ -14,12 +14,9 @@ const initialState: ShopState = {
   error: null,
 };
 
-export const fetchShop = createAsyncThunk(
-  "shop/fetchShop",
-  async (shopDomain: string) => {
-    return getShop(shopDomain);
-  },
-);
+export const fetchShop = createAsyncThunk("shop/fetchShop", async () => {
+  return getShop();
+});
 
 const shopSlice = createSlice({
   name: "shop",

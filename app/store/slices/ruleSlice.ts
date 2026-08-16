@@ -8,7 +8,6 @@ import {
   getRules,
   updateRule as updateRuleService,
 } from "../../services/rules.service";
-import { RootState } from "..";
 
 interface RuleState {
   items: CPRule[];
@@ -24,19 +23,10 @@ const initialState: RuleState = {
   error: null,
 };
 
-export const fetchRules = createAsyncThunk(
-  "rule/fetchRules",
-  async (_, { getState }) => {
-    const state = getState() as RootState;
-    const shopId = Number(state.shop.data?.id);
+export const fetchRules = createAsyncThunk("rule/fetchRules", async () => {
+  return getRules();
+});
 
-    if (!Number.isFinite(shopId)) {
-      throw new Error("Shop ID is not available");
-    }
-
-    return getRules(shopId);
-  },
-);
 
 export const fetchRuleById = createAsyncThunk(
   "rule/fetchRuleById",
@@ -47,15 +37,8 @@ export const fetchRuleById = createAsyncThunk(
 
 export const createRule = createAsyncThunk(
   "rule/createRule",
-  async (values: RuleFormValues, { getState }) => {
-    const state = getState() as RootState;
-    const shopId = Number(state.shop.data?.id);
-
-    if (!Number.isFinite(shopId)) {
-      throw new Error("Shop ID is not available");
-    }
-
-    return createRuleService(values, shopId);
+  async (values: RuleFormValues) => {
+    return createRuleService(values);
   },
 );
 

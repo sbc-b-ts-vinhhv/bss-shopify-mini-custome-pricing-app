@@ -58,7 +58,7 @@ mọi path khác (`/api/rules`, `/api/shops/*`) vẫn được proxy sang Koa nh
 
 ### Bài 3 — còn lại
 
-- **`package.json` còn 2 script chết**: `dev:server:sync-db`, `dev:server:test-db` trỏ tới file đã xoá.
+- ~~**`package.json` còn 2 script chết**: `dev:server:sync-db`, `dev:server:test-db` trỏ tới file đã xoá.~~ ✅ Đã gỡ (Task 0 của Bài 4).
 
 > `app/mocks/mock-data.ts` và `app/services/delay.ts` đã được xoá sau Task 9 — toàn bộ frontend đã chạy trên API thật, `npx tsc --noEmit` sạch 0 lỗi.
 - **AfterAuth chưa đúng chỗ.** Việc tạo shop đang nằm trong `loader` của `app/routes/app._index.tsx` (gọi `POST /api/shops/install`), nghĩa là chạy lại mỗi lần merchant mở trang Home, không phải hook afterAuth. Chạy được nhưng lệch yêu cầu mục 5 của đề bài.

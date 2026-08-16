@@ -1,10 +1,10 @@
 import Router from "@koa/router";
 
 import {
-  createOrReactivateShopController,
   createShopController,
   getCurrentShopController,
   getShopController,
+  installShopController,
   syncCurrentShopController,
   updateShopController,
 } from "../controllers/shop.controller.js";
@@ -18,10 +18,7 @@ router.post("/current/sync", syncCurrentShopController);
 router.post("/", createShopController);
 router.get("/:id", getShopController);
 router.patch("/:id", updateShopController);
-router.post(
-  "/install",
-  createOrReactivateShopController,
-);
+router.post("/install", installShopController);
 
 
 export default router;

@@ -10,7 +10,7 @@ embedded = true
 scopes = "read_products,read_themes,read_customers,write_themes"
 
 [webhooks]
-api_version = "2026-10"
+api_version = "2026-07"
 
   [[webhooks.subscriptions]]
   uri = "/webhooks/app/uninstalled"

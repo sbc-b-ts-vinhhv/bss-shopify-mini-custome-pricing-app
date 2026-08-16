@@ -3,6 +3,15 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 
 /**
+ * Allowlist các path được đi qua proxy.
+ *
+ * Những endpoint còn lại của Koa (`shops/install`, `POST /shops`,
+ * `/shops/:id`) là endpoint nội bộ: afterAuth và curl gọi thẳng
+ * localhost:8080. Browser không có lý do gì chạm tới, nên không mở.
+ */
+const PROXIED_PATHS = [/^rules(\/|$)/, /^shops\/current(\/|$)/];
+
+/**
  * Proxy các request /api/* của browser sang backend Koa.
  *
  * Browser không gọi thẳng Koa được: app chạy trên tunnel https (public address
@@ -13,6 +22,12 @@ import { authenticate } from "../shopify.server";
 async function proxyToBackend(request: Request, splat: string | undefined) {
   const { session } = await authenticate.admin(request);
 
+  const path = splat ?? "";
+
+  if (!PROXIED_PATHS.some((pattern) => pattern.test(path))) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
   // eslint-disable-next-line no-undef
   const backendUrl = process.env.BACKEND_URL;
 
@@ -21,7 +36,7 @@ async function proxyToBackend(request: Request, splat: string | undefined) {
   }
 
   const { search } = new URL(request.url);
-  const target = `${backendUrl}/api/${splat ?? ""}${search}`;
+  const target = `${backendUrl}/api/${path}${search}`;
 
   const headers = new Headers({
     Accept: "application/json",

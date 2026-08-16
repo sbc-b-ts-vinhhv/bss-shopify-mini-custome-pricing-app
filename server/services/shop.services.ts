@@ -84,6 +84,7 @@ export async function createOrReactivateShop(input: {
   token: string;
   name: string;
   email: string | null;
+  ownerName: string | null;
 }) {
   const existingShop = await Shop.findOne({
     where: {
@@ -98,6 +99,7 @@ export async function createOrReactivateShop(input: {
       token: input.token,
       name: input.name,
       email: input.email,
+      ownerName: input.ownerName,
       status: "active",
     });
   }
@@ -106,6 +108,7 @@ export async function createOrReactivateShop(input: {
   existingShop.token = input.token;
   existingShop.name = input.name;
   existingShop.email = input.email;
+  existingShop.ownerName = input.ownerName;
   existingShop.status = "active";
 
   await existingShop.save();

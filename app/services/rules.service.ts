@@ -3,25 +3,23 @@ import { apiRequest } from "./api-client";
 
 type RuleResponse = CPRule;
 
-function toRuleRequestBody(values: RuleFormValues, shopId: number) {
+function toRuleRequestBody(values: RuleFormValues) {
   return {
-    shopId,
     name: values.name.trim(),
     status: values.status,
     priority: Number(values.priority) || 0,
     productConditionType: values.productConditionType,
-    productTags: values.productConditionType === "TAGS"
-      ? values.tags.map((tag) => tag.trim()).filter(Boolean)
-      : [],
+    productTags:
+      values.productConditionType === "TAGS"
+        ? values.tags.map((tag) => tag.trim()).filter(Boolean)
+        : [],
     discountType: values.discountType,
     discountValue: Number(values.discountValue),
   };
 }
 
-export async function getRules(shopId: number): Promise<CPRule[]> {
-  return apiRequest<RuleResponse[]>(
-    `/api/rules${Number.isFinite(shopId) ? `?shopId=${shopId}` : ""}`,
-  );
+export async function getRules(): Promise<CPRule[]> {
+  return apiRequest<RuleResponse[]>("/api/rules");
 }
 
 export async function getRuleById(id: string): Promise<CPRule | undefined> {
@@ -36,28 +34,20 @@ export async function getRuleById(id: string): Promise<CPRule | undefined> {
   }
 }
 
-export async function createRule(values: RuleFormValues, shopId: number): Promise<CPRule> {
+export async function createRule(values: RuleFormValues): Promise<CPRule> {
   return apiRequest<RuleResponse>("/api/rules", {
     method: "POST",
-    body: JSON.stringify(toRuleRequestBody(values, shopId)),
+    body: JSON.stringify(toRuleRequestBody(values)),
   });
 }
 
-export async function updateRule(id: string, values: RuleFormValues): Promise<CPRule> {
+export async function updateRule(
+  id: string,
+  values: RuleFormValues,
+): Promise<CPRule> {
   return apiRequest<RuleResponse>(`/api/rules/${id}`, {
     method: "PATCH",
-    body: JSON.stringify({
-      name: values.name.trim(),
-      status: values.status,
-      priority: Number(values.priority) || 0,
-      productConditionType: values.productConditionType,
-      productTags:
-        values.productConditionType === "TAGS"
-          ? values.tags.map((tag) => tag.trim()).filter(Boolean)
-          : [],
-      discountType: values.discountType,
-      discountValue: Number(values.discountValue),
-    }),
+    body: JSON.stringify(toRuleRequestBody(values)),
   });
 }
 

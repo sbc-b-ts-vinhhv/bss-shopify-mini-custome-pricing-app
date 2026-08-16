@@ -1,376 +1,70 @@
-import { useEffect } from "react";
-import type {
-  ActionFunctionArgs,
-  HeadersFunction,
-  LoaderFunctionArgs,
-} from "react-router";
-import { useFetcher } from "react-router";
-import { useAppBridge } from "@shopify/app-bridge-react";
+import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import {
+  Banner,
   BlockStack,
-  Box,
-  Button,
   Card,
-  InlineStack,
+  InlineGrid,
   Layout,
-  Link,
-  List,
   Page,
+  SkeletonBodyText,
   Text,
 } from "@shopify/polaris";
-import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
+import { authenticate } from "../shopify.server";
+import { useShopSettings } from "../hooks/useShopSettings";
+
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin, session } = await authenticate.admin(request);
+  await authenticate.admin(request);
 
-  if (!session.accessToken) {
-    throw new Error("Access token is missing");
-  }
-
-  const response = await admin.graphql(`
-    query {
-      shop {
-        id
-        name
-      }
-    }  
-  `);
-
-  const result = await response.json();
-  const shop = result.data?.shop;
-
-  if (!shop) {
-    throw new Error("Shop information is missin");
-  }
-
-  await fetch(`${process.env.BACKEND_URL}/api/shops/install`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      shopifyId: shop.id,
-      shop: session.shop,
-      token: session.accessToken,
-      name: shop.name,
-    }),
-  });
-
-  return {
-    shopDomain: session.shop,
-  };
+  return null;
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
-  const response = await admin.graphql(
-    `#graphql
-      mutation populateProduct($product: ProductCreateInput!) {
-        productCreate(product: $product) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
-            }
-            demoInfo: metafield(namespace: "$app", key: "demo_info") {
-              jsonValue
-            }
-          }
-        }
-      }`,
-    {
-      variables: {
-        product: {
-          title: `${color} Snowboard`,
-          metafields: [
-            {
-              namespace: "$app",
-              key: "demo_info",
-              value: "Created by React Router Template",
-            },
-          ],
-        },
-      },
-    },
-  );
-  const responseJson = await response.json();
-
-  const product = responseJson.data!.productCreate!.product!;
-  const variantId = product.variants.edges[0]!.node!.id!;
-
-  const variantResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyReactRouterTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
-          id
-          price
-          barcode
-          createdAt
-        }
-      }
-    }`,
-    {
-      variables: {
-        productId: product.id,
-        variants: [{ id: variantId, price: "100.00" }],
-      },
-    },
-  );
-
-  const variantResponseJson = await variantResponse.json();
-
-  const metaobjectResponse = await admin.graphql(
-    `#graphql
-    mutation shopifyReactRouterTemplateUpsertMetaobject($handle: MetaobjectHandleInput!, $values: JSON!) {
-      metaobjectUpsert(handle: $handle, values: $values) {
-        metaobject {
-          id
-          handle
-          values
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }`,
-    {
-      variables: {
-        handle: {
-          type: "$app:example",
-          handle: "demo-entry",
-        },
-        values: {
-          title: "Demo Entry",
-          description:
-            "This metaobject was created by the Shopify app template to demonstrate the metaobject API.",
-        },
-      },
-    },
-  );
-
-  const metaobjectResponseJson = await metaobjectResponse.json();
-
-  return {
-    product: responseJson!.data!.productCreate!.product,
-    variant:
-      variantResponseJson!.data!.productVariantsBulkUpdate!.productVariants,
-    metaobject: metaobjectResponseJson!.data!.metaobjectUpsert!.metaobject,
-  };
-};
-
-export default function Index() {
-  const fetcher = useFetcher<typeof action>();
-
-  const shopify = useAppBridge();
-  const isLoading =
-    ["loading", "submitting"].includes(fetcher.state) &&
-    fetcher.formMethod === "POST";
-
-  useEffect(() => {
-    if (fetcher.data?.product?.id) {
-      shopify.toast.show("Product created");
-    }
-  }, [fetcher.data?.product?.id, shopify]);
-
-  const generateProduct = () => fetcher.submit({}, { method: "POST" });
-
+function Field({ label, value }: { label: string; value: string | null }) {
   return (
-    <Page
-      title="Shopify app template"
-      primaryAction={{
-        content: "Generate a product",
-        onAction: generateProduct,
-        loading: isLoading,
-      }}
-    >
-      <Layout>
-        <Layout.Section>
-          <BlockStack gap="400">
-            <Card>
-              <Text as="h2" variant="headingMd">
-                Hello World
-              </Text>
-              <Text as="p">Day la app cua taoooo</Text>
-            </Card>
-            <Card>
-              <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">
-                  Get started with products
-                </Text>
-                <Text as="p">
-                  Generate a product with GraphQL and get the JSON output for
-                  that product. Learn more about the{" "}
-                  <Link
-                    url="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
-                    target="_blank"
-                  >
-                    productCreate
-                  </Link>{" "}
-                  mutation in our API references. Includes a product{" "}
-                  <Link
-                    url="https://shopify.dev/docs/apps/build/custom-data/metafields"
-                    target="_blank"
-                  >
-                    metafield
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    url="https://shopify.dev/docs/apps/build/custom-data/metaobjects"
-                    target="_blank"
-                  >
-                    metaobject
-                  </Link>
-                  .
-                </Text>
-                <InlineStack gap="200">
-                  <Button onClick={generateProduct} loading={isLoading}>
-                    Generate a product
-                  </Button>
-                  {fetcher.data?.product && (
-                    <Button
-                      onClick={() => {
-                        shopify.intents.invoke?.("edit:shopify/Product", {
-                          value: fetcher.data?.product?.id,
-                        });
-                      }}
-                      variant="tertiary"
-                    >
-                      Edit product
-                    </Button>
-                  )}
-                </InlineStack>
-                {fetcher.data?.product && (
-                  <BlockStack gap="300">
-                    <Text as="h3" variant="headingSm">
-                      productCreate mutation
-                    </Text>
-                    <JsonOutput value={fetcher.data.product} />
-                    <Text as="h3" variant="headingSm">
-                      productVariantsBulkUpdate mutation
-                    </Text>
-                    <JsonOutput value={fetcher.data.variant} />
-                    <Text as="h3" variant="headingSm">
-                      metaobjectUpsert mutation
-                    </Text>
-                    <JsonOutput value={fetcher.data.metaobject} />
-                  </BlockStack>
-                )}
-              </BlockStack>
-            </Card>
-          </BlockStack>
-        </Layout.Section>
-        <Layout.Section variant="oneThird">
-          <BlockStack gap="400">
-            <Card>
-              <BlockStack gap="200">
-                <Text as="h2" variant="headingMd">
-                  App template specs
-                </Text>
-                <Text as="p">
-                  Framework:{" "}
-                  <Link url="https://reactrouter.com/" target="_blank">
-                    React Router
-                  </Link>
-                </Text>
-                <Text as="p">
-                  Interface:{" "}
-                  <Link url="https://polaris.shopify.com/" target="_blank">
-                    Polaris React
-                  </Link>
-                </Text>
-                <Text as="p">
-                  API:{" "}
-                  <Link
-                    url="https://shopify.dev/docs/api/admin-graphql"
-                    target="_blank"
-                  >
-                    GraphQL
-                  </Link>
-                </Text>
-                <Text as="p">
-                  Custom data:{" "}
-                  <Link
-                    url="https://shopify.dev/docs/apps/build/custom-data"
-                    target="_blank"
-                  >
-                    Metafields &amp; metaobjects
-                  </Link>
-                </Text>
-                <Text as="p">
-                  Database:{" "}
-                  <Link url="https://www.prisma.io/" target="_blank">
-                    Prisma
-                  </Link>
-                </Text>
-              </BlockStack>
-            </Card>
-            <Card>
-              <Text as="h2" variant="headingMd">
-                Next steps
-              </Text>
-              <List>
-                <List.Item>
-                  Build an{" "}
-                  <Link
-                    url="https://shopify.dev/docs/apps/getting-started/build-app-example"
-                    target="_blank"
-                  >
-                    example app
-                  </Link>
-                </List.Item>
-                <List.Item>
-                  Explore Shopify&apos;s API with{" "}
-                  <Link
-                    url="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
-                    target="_blank"
-                  >
-                    GraphiQL
-                  </Link>
-                </List.Item>
-              </List>
-            </Card>
-          </BlockStack>
-        </Layout.Section>
-      </Layout>
-    </Page>
+    <BlockStack gap="100">
+      <Text as="span" variant="bodySm" tone="subdued">
+        {label}
+      </Text>
+      <Text as="p" variant="bodyMd" fontWeight="medium">
+        {value ?? "—"}
+      </Text>
+    </BlockStack>
   );
 }
 
-function JsonOutput({ value }: { value: unknown }) {
+export default function Index() {
+  // Shop lấy từ Redux (nạp ở layout /app), không fetch lại ở đây.
+  const { shop, loading, error } = useShopSettings();
+
   return (
-    <Box
-      padding="400"
-      borderWidth="025"
-      borderColor="border"
-      borderRadius="200"
-      background="bg-surface-secondary"
-    >
-      <pre
-        style={{
-          margin: 0,
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-        }}
-      >
-        <code>{JSON.stringify(value, null, 2)}</code>
-      </pre>
-    </Box>
+    <Page title="Custom Pricing">
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text as="h2" variant="headingMd">
+                Shop information
+              </Text>
+
+              {error ? (
+                <Banner tone="critical">{error}</Banner>
+              ) : loading || !shop ? (
+                <SkeletonBodyText lines={3} />
+              ) : (
+                <InlineGrid columns={{ xs: 1, sm: 2 }} gap="400">
+                  <Field label="Store name" value={shop.name} />
+                  <Field label="Owner" value={shop.ownerName} />
+                  <Field label="First name" value={shop.ownerFirstName} />
+                  <Field label="Email" value={shop.email} />
+                  <Field label="Domain" value={shop.domain} />
+                </InlineGrid>
+              )}
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 }
 
