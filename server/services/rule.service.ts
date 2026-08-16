@@ -7,6 +7,8 @@ import type {
   DiscountType,
 } from "../models/Rule.js";
 
+import { safeSyncRulesToMetafield } from "./metafield.service.js";
+
 export interface CreateRuleInput {
   shopId: number;
   name: string;
@@ -49,10 +51,14 @@ export interface UpdateRuleInput {
 }
 
 export async function createRule(data: CreateRuleInput) {
-  return Rule.create({
+  const rule = await Rule.create({
     ...data,
     endAt: parseEndAt(data.endAt),
   });
+
+  await safeSyncRulesToMetafield(data.shopId);
+
+  return rule;
 }
 
 export async function listRules(shopId: number) {
@@ -95,13 +101,15 @@ export async function updateRule(
     endAt: parseEndAt(data.endAt),
   });
 
+  await safeSyncRulesToMetafield(shopId);
+
   return rule;
 }
 
 export async function duplicateRule(id: number, shopId: number) {
   const rule = await getRuleById(id, shopId);
 
-  return Rule.create({
+  const copy = await Rule.create({
     shopId: rule.shopId,
     name: `${rule.name} (copy)`,
     // Bản sao luôn tắt để không tác động giá storefront trước khi được xem lại.
@@ -113,10 +121,18 @@ export async function duplicateRule(id: number, shopId: number) {
     discountValue: rule.discountValue,
     endAt: rule.endAt,
   });
+
+  // Bản sao luôn disabled nên payload không đổi — vẫn sync để không phải nhớ
+  // sửa chỗ này nếu sau đó default status của bản sao thay đổi.
+  await safeSyncRulesToMetafield(shopId);
+
+  return copy;
 }
 
 export async function deleteRule(id: number, shopId: number) {
   const rule = await getRuleById(id, shopId);
 
   await rule.destroy();
+
+  await safeSyncRulesToMetafield(shopId);
 }

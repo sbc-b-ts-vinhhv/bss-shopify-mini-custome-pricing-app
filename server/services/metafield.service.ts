@@ -2,7 +2,8 @@ import { Rule } from "../models/index.js";
 import { shopifyGraphql } from "../config/shopify.js";
 import { AppError } from "../utils/AppError.js";
 import type { ProductConditionType, DiscountType } from "../models/Rule.js";
-import { getShopByDomain } from "./shop.service.js";
+import { getShopByDomain, getShopById } from "./shop.service.js";
+import type { Shop } from "../models/Shop.js";
 
 // Namespace/key phải khớp với Liquid ở Task 6: app.metafields.custom_pricing.rules
 export const METAFIELD_NAMESPACE = "custom_pricing";
@@ -110,11 +111,19 @@ export async function buildRulesPayload(shopId: number): Promise<RulesPayload> {
   };
 }
 
-export async function syncRulesToMetafield(shopDomain: string) {
-  const shop = await getShopByDomain(shopDomain);
+export type SyncResult =
+  | { synced: false; reason: "uninstalled"; ruleCount: 0 }
+  | {
+      synced: true;
+      ruleCount: number;
+      bytes: number;
+      metafieldId: string | null;
+    };
 
+async function pushRulesFor(shop: Shop): Promise<SyncResult> {
+  // Token trong DB sau khi gỡ app là token chết, gọi Shopify chỉ nhận 401.
   if (shop.status === "uninstalled") {
-    return { synced: false, reason: "uninstalled" as const, ruleCount: 0 };
+    return { synced: false, reason: "uninstalled", ruleCount: 0 };
   }
 
   const payload = await buildRulesPayload(shop.id);
@@ -155,9 +164,40 @@ export async function syncRulesToMetafield(shopDomain: string) {
   }
 
   return {
-    synced: true as const,
+    synced: true,
     ruleCount: payload.rules.length,
     bytes,
     metafieldId: metafields[0]?.id ?? null,
   };
+}
+
+/** Dùng cho webhook / script / endpoint backfill — chỗ nào chỉ có domain. */
+export async function syncRulesToMetafield(shopDomain: string) {
+  return pushRulesFor(await getShopByDomain(shopDomain));
+}
+
+/** Dùng trong rule service — chỗ nào đã có sẵn shopId. */
+export async function syncRulesToMetafieldByShopId(shopId: number) {
+  return pushRulesFor(await getShopById(shopId));
+}
+
+/**
+ * Bản không bao giờ throw, dùng trong vòng đời rule.
+ *
+ * Rule đã nằm trong MySQL rồi — nếu Shopify lỗi/rate-limit thì cứ trả 200 cho
+ * merchant, metafield lệch thì backfill bằng POST /api/rules/sync-metafield.
+ * Để lỗi nổi lên sẽ khiến UI báo "tạo rule thất bại" trong khi rule đã tạo xong.
+ */
+export async function safeSyncRulesToMetafield(shopId: number): Promise<void> {
+  try {
+    const result = await syncRulesToMetafieldByShopId(shopId);
+
+    if (!result.synced) {
+      console.warn(
+        `[metafield] skipped sync for shopId=${shopId}: ${result.reason}`,
+      );
+    }
+  } catch (error) {
+    console.error(`[metafield] sync failed for shopId=${shopId}:`, error);
+  }
 }

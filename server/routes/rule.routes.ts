@@ -1,5 +1,4 @@
 import Router from "@koa/router";
-
 import {
   createRuleController,
   listRulesController,
@@ -7,11 +6,14 @@ import {
   updateRuleController,
   duplicateRuleController,
   deleteRuleController,
+  syncMetafieldController,
 } from "../controllers/rule.controller.js";
 
 const router = new Router({
   prefix: "/api/rules",
 });
+
+router.post("/sync-metafield", syncMetafieldController);
 
 router.post("/", createRuleController);
 router.get("/", listRulesController);

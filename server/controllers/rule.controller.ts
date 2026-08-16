@@ -17,6 +17,7 @@ import {
   validateCreateRuleInput,
   validateUpdateRuleInput,
 } from "../validators/rule.validator.js";
+import { syncRulesToMetafield } from "../services/metafield.service.js";
 
 function toId(value: unknown): number | null {
   const id = Number(value);
@@ -102,4 +103,16 @@ export async function deleteRuleController(ctx: RouterContext) {
   await deleteRule(requireRuleId(ctx), shopId);
 
   noContent(ctx);
+}
+
+/**
+ * Backfill thủ công. Khác với sync trong vòng đời rule ở chỗ hàm này KHÔNG nuốt
+ * lỗi — gọi tay thì cần thấy lỗi thật để biết vì sao metafield lệch.
+ */
+export async function syncMetafieldController(ctx: RouterContext) {
+  const shopDomain = requireShopDomain(ctx);
+
+  const result = await syncRulesToMetafield(shopDomain);
+
+  ok(ctx, result);
 }
