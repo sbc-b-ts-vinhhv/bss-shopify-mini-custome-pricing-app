@@ -49,6 +49,7 @@ function toFormValues(rule?: CPRule | null): RuleFormValues {
   return {
     name: rule?.name ?? "",
     status: rule?.status ?? "enabled",
+    priority: rule?.priority ?? 0,
     productConditionType: rule?.productCondition.type ?? "ALL",
     tags: rule?.productCondition.tags ?? [],
     discountType: rule?.discount.type ?? "FIXED_PRICE",
@@ -77,7 +78,7 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
         id: "preview-rule",
         name: "Preview",
         status: values.status,
-        priority: 0,
+        priority: Number(values.priority) || 0,
         productCondition: {
           type: values.productConditionType,
           tags: values.tags,
@@ -95,7 +96,7 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
       id: initialRule?.id ?? "preview-rule",
       name: values.name || initialRule?.name || "Preview",
       status: values.status,
-      priority: initialRule?.priority ?? 0,
+      priority: Number(values.priority) || 0,
       productCondition: {
         type: values.productConditionType,
         tags: values.tags,
@@ -119,15 +120,14 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
         ...values,
         name: values.name.trim(),
         tags: values.tags.filter(Boolean),
+        priority: Number(values.priority) || 0,
         discountValue: values.discountValue,
       });
 
       shopify.toast.show(
         mode === "create" ? "Pricing rule created" : "Pricing rule updated",
       );
-      if (mode === "create") {
-        navigate("/app/rules");
-      } 
+      navigate("/app/rules");
     } catch (error) {
       shopify.toast.show(
         error instanceof Error ? error.message : "Unable to save pricing rule",
@@ -154,9 +154,6 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
   const removeTag = (tag: string) => {
     setValues((current) => ({
       ...current,
-      statusSelectValue(status: RuleStatus) {
-        return status === "enabled" ? "enabled" : "disabled";
-      },
       tags: current.tags.filter((item) => item !== tag),
     }));
   };
@@ -236,6 +233,18 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                         setValues((current) => ({ ...current, name }))
                       }
                       autoComplete="off"
+                    />
+
+                    <TextField
+                      label="Priority"
+                      value={String(values.priority)}
+                      onChange={(priority) =>
+                        setValues((current) => ({ ...current, priority }))
+                      }
+                      type="number"
+                      min={0}
+                      autoComplete="off"
+                      helpText="Higher priority rules are applied first when several rules match."
                     />
 
                     <Select

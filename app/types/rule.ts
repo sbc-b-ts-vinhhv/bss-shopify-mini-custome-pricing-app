@@ -33,6 +33,7 @@ export interface CPRule {
 export interface RuleFormValues {
   name: string;
   status: RuleStatus;
+  priority: number | string;
   productConditionType: ProductConditionType;
   tags: string[];
   discountType: DiscountType;

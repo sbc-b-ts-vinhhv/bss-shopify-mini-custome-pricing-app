@@ -36,6 +36,10 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
 function parseDate(value: unknown): boolean {
   if (value === null || value === undefined) {
     return true;
@@ -48,7 +52,7 @@ function parseDate(value: unknown): boolean {
   return !Number.isNaN(new Date(value).getTime());
 }
 
-function validateDiscountValue(
+export function validateDiscountValue(
   discountType: DiscountType,
   discountValue: unknown,
 ): string | null {
@@ -87,6 +91,10 @@ export function validateCreateRuleInput(body: unknown) {
     !isValidEnum(body.status, RULE_STATUSES)
   ) {
     throw AppError.badRequest("Invalid status");
+  }
+
+  if (body.priority !== undefined && !isNonNegativeInteger(body.priority)) {
+    throw AppError.badRequest("priority must be a non-negative integer");
   }
 
   if (
@@ -166,6 +174,10 @@ export function validateUpdateRuleInput(body: unknown) {
     !isValidEnum(body.status, RULE_STATUSES)
   ) {
     throw AppError.badRequest("Invalid status");
+  }
+
+  if (body.priority !== undefined && !isNonNegativeInteger(body.priority)) {
+    throw AppError.badRequest("priority must be a non-negative integer");
   }
 
   if (

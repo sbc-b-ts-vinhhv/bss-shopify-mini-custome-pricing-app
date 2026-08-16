@@ -1,5 +1,6 @@
 import { Rule } from "../models/index.js";
 import { AppError } from "../utils/AppError.js";
+import { validateDiscountValue } from "../validators/rule.validator.js";
 import type {
   RuleStatus,
   ProductConditionType,
@@ -77,6 +78,18 @@ export async function updateRule(id: number, data: UpdateRuleInput) {
     throw AppError.notFound("Rule not found");
   }
 
+  // discountType có thể không nằm trong payload, khi đó phải đối chiếu với giá trị đang lưu.
+  if (data.discountValue !== undefined) {
+    const discountError = validateDiscountValue(
+      data.discountType ?? rule.discountType,
+      data.discountValue,
+    );
+
+    if (discountError) {
+      throw AppError.badRequest(discountError);
+    }
+  }
+
   await rule.update({
     ...data,
     endAt: parseEndAt(data.endAt),
@@ -94,8 +107,9 @@ export async function duplicateRule(id: number) {
 
   return Rule.create({
     shopId: rule.shopId,
-    name: rule.name,
-    status: rule.status,
+    name: `${rule.name} (copy)`,
+    // Bản sao luôn tắt để không tác động giá storefront trước khi được xem lại.
+    status: "disabled",
     priority: rule.priority,
     productConditionType: rule.productConditionType,
     productTags: rule.productTags,

@@ -77,6 +77,22 @@ Rule.init(
       type: DataTypes.JSON,
       allowNull: false,
       defaultValue: [],
+      // MariaDB lưu JSON dưới dạng LONGTEXT nên Sequelize trả về chuỗi thô khi đọc.
+      get(): string[] {
+        const raw = this.getDataValue("productTags") as unknown;
+
+        if (typeof raw === "string") {
+          try {
+            const parsed = JSON.parse(raw);
+
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [];
+          }
+        }
+
+        return Array.isArray(raw) ? raw : [];
+      },
     },
 
     discountType: {

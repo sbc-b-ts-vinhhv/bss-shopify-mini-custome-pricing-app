@@ -37,7 +37,18 @@ export default function RulesPage() {
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(selectableRules);
 
-  const handleDuplicate = () => {};
+  const handleDuplicate = async (rule: CPRule) => {
+    setProcessingRuleId(rule.id);
+
+    try {
+      await duplicateRule(rule.id).unwrap();
+      shopify.toast.show(`Duplicated "${rule.name}"`);
+    } catch {
+      shopify.toast.show("Could not duplicate rule", { isError: true });
+    } finally {
+      setProcessingRuleId(null);
+    }
+  };
 
   const handleDelete = async () => {
     if (!ruleToDelete) return;
@@ -124,10 +135,9 @@ export default function RulesPage() {
               <Button
                 icon={DuplicateIcon}
                 variant="secondary"
+                disabled={processingRuleId !== null}
                 accessibilityLabel={`Duplicate ${rule.name}`}
-                onClick={() => {
-                  // TODO: duplicate rule
-                }}
+                onClick={() => handleDuplicate(rule)}
               />
 
               <Button
@@ -154,7 +164,17 @@ export default function RulesPage() {
       }}
     >
       <BlockStack gap="400">
-        {!loading && rules.length === 0 && (
+        {error && (
+          <Banner
+            tone="critical"
+            title="Unable to load pricing rules"
+            action={{ content: "Retry", onAction: () => refetch() }}
+          >
+            <p>{error}</p>
+          </Banner>
+        )}
+
+        {!loading && !error && rules.length === 0 && (
           <Card>
             <EmptyState
               image="/images/empty-state.svg"

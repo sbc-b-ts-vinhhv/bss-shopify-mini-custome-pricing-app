@@ -8,6 +8,7 @@ function toRuleRequestBody(values: RuleFormValues, shopId: number) {
     shopId,
     name: values.name.trim(),
     status: values.status,
+    priority: Number(values.priority) || 0,
     productConditionType: values.productConditionType,
     productTags: values.productConditionType === "TAGS"
       ? values.tags.map((tag) => tag.trim()).filter(Boolean)
@@ -48,6 +49,7 @@ export async function updateRule(id: string, values: RuleFormValues): Promise<CP
     body: JSON.stringify({
       name: values.name.trim(),
       status: values.status,
+      priority: Number(values.priority) || 0,
       productConditionType: values.productConditionType,
       productTags:
         values.productConditionType === "TAGS"
