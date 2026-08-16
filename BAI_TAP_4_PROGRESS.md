@@ -11,8 +11,8 @@
 | # | Task | Nội dung | Trạng thái |
 |---|------|----------|------------|
 | 0 | Dọn nợ Bài 3 | Gỡ 2 script chết trong `package.json`; thống nhất `api_version` trong `shopify.app.toml` với `SHOPIFY_API_VERSION=2026-07` | ✅ Done |
-| 1 | Sửa route webhook Koa | `server/routes/webhook.routes.ts` đang là `router.post("/app-uninstalled")` — **thiếu handler**, route chết. Wire `appUninstalledController` vào | ⏳ |
-| 2 | Webhook `app/uninstalled` | `app/routes/webhooks.app.uninstalled.tsx` forward sang Koa → `uninstallShop()` đổi `shops.status = uninstalled` | ⏳ |
+| 1 | Sửa route webhook Koa | `server/routes/webhook.routes.ts` đang là `router.post("/app-uninstalled")` — **thiếu handler**, route chết. Wire `appUninstalledController` vào | ✅ Done |
+| 2 | Webhook `app/uninstalled` | `app/routes/webhooks.app.uninstalled.tsx` forward sang Koa → `uninstallShop()` đổi `shops.status = uninstalled` | ✅ Done |
 | 3 | Webhook `shop/update` | Khai topic trong `shopify.app.toml` + route `app/routes/webhooks.shop.update.tsx` + endpoint Koa gọi `syncShopFromShopify()` (update email/name/ownerName) | ⏳ |
 | 4 | Service đẩy Metafield | `server/services/metafield.service.ts`: query `currentAppInstallation.id` → `metafieldsSet` JSON rules lên app-data metafield | ⏳ |
 | 5 | Nối sync vào vòng đời rule | Gọi sync sau create/update/delete/duplicate + endpoint thủ công `POST /api/rules/sync-metafield` để backfill/test | ⏳ |
