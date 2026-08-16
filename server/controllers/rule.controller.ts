@@ -7,8 +7,8 @@ import {
   updateRule,
   duplicateRule,
   deleteRule,
-} from "../services/rule.services.js";
-import { getShopByDomain } from "../services/shop.services.js";
+} from "../services/rule.service.js";
+import { getShopByDomain } from "../services/shop.service.js";
 import { toRuleDTO } from "../mappers/rule.mapper.js";
 import { AppError } from "../utils/AppError.js";
 import { requireShopDomain } from "../utils/request.js";

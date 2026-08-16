@@ -13,8 +13,8 @@
 | 0 | Dọn nợ Bài 3 | Gỡ 2 script chết trong `package.json`; thống nhất `api_version` trong `shopify.app.toml` với `SHOPIFY_API_VERSION=2026-07` | ✅ Done |
 | 1 | Sửa route webhook Koa | `server/routes/webhook.routes.ts` đang là `router.post("/app-uninstalled")` — **thiếu handler**, route chết. Wire `appUninstalledController` vào | ✅ Done |
 | 2 | Webhook `app/uninstalled` | `app/routes/webhooks.app.uninstalled.tsx` forward sang Koa → `uninstallShop()` đổi `shops.status = uninstalled` | ✅ Done |
-| 3 | Webhook `shop/update` | Khai topic trong `shopify.app.toml` + route `app/routes/webhooks.shop.update.tsx` + endpoint Koa gọi `syncShopFromShopify()` (update email/name/ownerName) | ⏳ |
-| 4 | Service đẩy Metafield | `server/services/metafield.service.ts`: query `currentAppInstallation.id` → `metafieldsSet` JSON rules lên app-data metafield | ⏳ |
+| 3 | Webhook `shop/update` | Khai topic trong `shopify.app.toml` + route `app/routes/webhooks.shop.update.tsx` + endpoint Koa gọi `syncShopFromShopify()` (update email/name/ownerName) | ✅ Done |
+| 4 | Service đẩy Metafield | `server/services/metafield.service.ts`: query `currentAppInstallation.id` → `metafieldsSet` JSON rules lên app-data metafield | ✅ Done |
 | 5 | Nối sync vào vòng đời rule | Gọi sync sau create/update/delete/duplicate + endpoint thủ công `POST /api/rules/sync-metafield` để backfill/test | ⏳ |
 | 6 | Block PDP (Liquid) | Block mới trong `extensions/vinhhv-app-embed/blocks/`: chỉ chạy trên PDP, dump `product` + `app.metafields` + `shop.money_format` ra JSON | ⏳ |
 | 7 | Matching + tính giá (JS) | Port `app/utils/pricing.ts` sang vanilla JS trong extension: lọc rule enabled/chưa hết hạn → match tag → chọn theo `priority` → tính giá | ⏳ |
@@ -175,7 +175,7 @@ Lưu ý:
 4. `shopify app deploy` (hoặc restart `npm run dev`) để Shopify đăng ký topic mới. **Không deploy thì webhook không bao giờ bắn.**
 5. Test: Shopify Admin → Settings → Store details → đổi email → xem `shops.email` trong MySQL.
 
-### Task 4 — Service đẩy metafield
+### Task 4 — Service đẩy metafield ✅
 
 File mới `server/services/metafield.service.ts`:
 
@@ -184,6 +184,16 @@ File mới `server/services/metafield.service.ts`:
 - `syncRulesToMetafield(shopDomain)` — ghép 2 cái trên + `metafieldsSet`, check `userErrors`.
 
 Dùng `shopifyGraphql()` của `server/config/shopify.ts` (token từ DB). Không gọi từ app layer — đây là luồng có thể chạy khi không có session merchant.
+
+Đã verify: metafield `gid://shopify/Metafield/46791206076473`, `type: json`, đọc lại ra đúng shape.
+
+Hai bẫy đã xử lý (đừng refactor mất):
+- `discountValue` là `DECIMAL(10,2)` ⇒ Sequelize trả **string** `"20.00"` ⇒ phải `Number()` trong `buildRulesPayload`, không thì JS storefront ra `NaN`.
+- `value` truyền cho `metafieldsSet` phải là **string** ⇒ `JSON.stringify(payload)`, không đưa object.
+
+Thêm `server/scripts/sync-metafield.ts` để chạy tay: `npx tsx server/scripts/sync-metafield.ts <shop>.myshopify.com`.
+
+> Tên file service trong repo là **số ít**: `rule.service.ts`, `shop.service.ts`, `shopify.service.ts`. Import bằng đường **relative** (`./shop.service.js`), đừng dùng `server/...` — nó chỉ chạy nhờ `baseUrl` trong `tsconfig.json`.
 
 ### Task 5 — Nối sync vào vòng đời rule
 

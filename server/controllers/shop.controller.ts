@@ -6,7 +6,7 @@ import {
   getShopByDomain,
   getShopById,
   updateShop,
-} from "../services/shop.services.js";
+} from "../services/shop.service.js";
 import {
   fetchShopInfoWithToken,
   syncShopFromShopify,

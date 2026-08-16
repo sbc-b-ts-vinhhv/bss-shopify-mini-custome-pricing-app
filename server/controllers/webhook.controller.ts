@@ -3,7 +3,7 @@ import type { RouterContext } from "@koa/router";
 import { requireShopDomain } from "../utils/request.js";
 import { ok } from "../utils/response.js";
 
-import { getShopByDomain, uninstallShop } from "../services/shop.services.js";
+import { getShopByDomain, uninstallShop } from "../services/shop.service.js";
 import { syncShopFromShopify } from "../services/shopify.service.js";
 
 /**

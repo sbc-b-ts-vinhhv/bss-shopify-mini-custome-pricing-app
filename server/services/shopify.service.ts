@@ -1,5 +1,5 @@
 import { shopifyGraphql } from "../config/shopify.js";
-import { getShopByDomain } from "./shop.services.js";
+import { getShopByDomain } from "./shop.service.js";
 import { AppError } from "../utils/AppError.js";
 
 const SHOP_INFO_QUERY = `#graphql
