@@ -1,5 +1,6 @@
 import { useAppBridge } from "@shopify/app-bridge-react";
 import {
+  Autocomplete,
   Avatar,
   Badge,
   BlockStack,
@@ -9,6 +10,7 @@ import {
   ChoiceList,
   ChoiceListProps,
   Collapsible,
+  Icon,
   IndexTable,
   InlineStack,
   Link,
@@ -18,6 +20,7 @@ import {
   Text,
   TextField,
 } from "@shopify/polaris";
+import { SearchIcon } from "@shopify/polaris-icons";
 import { usePricingPreview } from "app/hooks/usePricingPreview";
 import { mockProducts } from "app/mocks/mock-data";
 import {
@@ -36,6 +39,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import styles from "./RuleForm.module.css";
+import { useProductTags } from "app/hooks/useProductTags";
 
 type RuleFormMode = "create" | "edit";
 
@@ -66,6 +70,13 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
   const [tagDraft, setTagDraft] = useState("");
   const [showPricingDetails, setShowPricingDetails] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  const {
+    tags: shopTags,
+    loading: tagsLoading,
+    error: tagsError,
+    registerTag,
+  } = useProductTags();
 
   useEffect(() => {
     setValues(toFormValues(initialRule));
@@ -141,6 +152,8 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
     const nextTag = candidate.trim();
     if (!nextTag) return;
 
+    registerTag(nextTag);
+
     setValues((current) => ({
       ...current,
       productConditionType: "TAGS",
@@ -156,6 +169,28 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
       ...current,
       tags: current.tags.filter((item) => item !== tag),
     }));
+  };
+
+  const tagQuery = tagDraft.trim();
+
+  const tagOptions = useMemo(() => {
+    const normalized = tagQuery.toLowerCase();
+
+    return shopTags
+      .filter((tag) => !values.tags.includes(tag))
+      .filter((tag) => !normalized || tag.toLowerCase().includes(normalized))
+      .slice(0, 20)
+      .map((tag) => ({ value: tag, label: tag }));
+  }, [shopTags, tagQuery, values.tags]);
+
+  const canCreateTag =
+    tagQuery.length > 0 &&
+    !shopTags.some((tag) => tag.toLowerCase() === tagQuery.toLowerCase()) &&
+    !values.tags.some((tag) => tag.toLowerCase() === tagQuery.toLowerCase());
+
+  const handleTagSelect = (selected: string[]) => {
+    const picked = selected[0];
+    if (picked) addTag(picked);
   };
 
   const previewRowsMarkup = previewRows.map(
@@ -298,20 +333,39 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                       open={values.productConditionType === "TAGS"}
                     >
                       <BlockStack gap="300">
-                        <InlineStack gap="200" blockAlign="end" align="start">
-                          <Box minWidth="280px">
-                            <TextField
+                        <Autocomplete
+                          options={tagOptions}
+                          selected={[]}
+                          loading={tagsLoading}
+                          onSelect={handleTagSelect}
+                          actionBefore={
+                            canCreateTag
+                              ? {
+                                  content: `Create tag "${tagQuery}"`,
+                                  onAction: () => addTag(tagQuery),
+                                }
+                              : undefined
+                          }
+                          emptyState={
+                            <Box padding="300">
+                              <Text as="p" tone="subdued" alignment="center">
+                                No matching tag. Type a name to create a new
+                                one.
+                              </Text>
+                            </Box>
+                          }
+                          textField={
+                            <Autocomplete.TextField
                               label="Product tags"
                               value={tagDraft}
                               onChange={setTagDraft}
+                              prefix={<Icon source={SearchIcon} tone="base" />}
+                              placeholder="Search or create a tag"
                               autoComplete="off"
-                              placeholder="Product tags"
+                              error={tagsError ?? undefined}
                             />
-                          </Box>
-                          <Button onClick={() => addTag(tagDraft)}>
-                            Add tag
-                          </Button>
-                        </InlineStack>
+                          }
+                        />
                         <InlineStack gap="200">
                           {values.tags.map((tag) => (
                             <Tag key={tag} onRemove={() => removeTag(tag)}>
