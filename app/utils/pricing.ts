@@ -16,7 +16,10 @@ export function calculateModifiedPrice(
   const discount = rule.discount;
 
   if (discount.type === "FIXED_PRICE") {
-    return Math.max(0, Number(discount.value));
+    const fixedPrice = Math.max(0, Number(discount.value));
+
+    // Không cho Modified Price cao hơn Original Price
+    return Math.min(originalPrice, fixedPrice);
   }
 
   if (discount.type === "DECREASE_FIXED") {
@@ -24,6 +27,7 @@ export function calculateModifiedPrice(
   }
 
   const percentage = Math.min(100, Math.max(0, Number(discount.value)));
+
   const discounted = originalPrice - (originalPrice * percentage) / 100;
 
   return Math.max(0, discounted);

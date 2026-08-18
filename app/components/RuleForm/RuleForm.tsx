@@ -352,9 +352,9 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
     ({ product, originalPrice, modifiedPrice }, index) => (
       <IndexTable.Row id={product.id} key={product.id} position={index}>
         <IndexTable.Cell>
-          <Link url={`#${product.id}`} removeUnderline>
+          <Text as="span" tone="subdued">
             {product.id}
-          </Link>
+          </Text>
         </IndexTable.Cell>
         <IndexTable.Cell>
           <Avatar name={product.title} size="sm" source={product.image} />
