@@ -1,10 +1,10 @@
 import type { CPRule } from "../types/rule";
 import type { Product } from "../types/product";
 
-export function formatMoney(value: number): string {
-  return new Intl.NumberFormat("en-US", {
+export function formatMoney(value: number, currencyCode: string): string {
+  return new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency: "USD",
+    currency: currencyCode,
     maximumFractionDigits: 2,
   }).format(value);
 }

@@ -27,11 +27,6 @@ export const productConditionOptions: ChoiceListProps["choices"] = [
   },
 ];
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
-
 export function formatApplyTo(condition: ProductCondition): string {
   if (condition.type === "ALL") {
     return "All products";
@@ -44,7 +39,15 @@ export function formatApplyTo(condition: ProductCondition): string {
   return `Product tags: ${condition.tags.join(", ")}`;
 }
 
-export function formatDiscount(discount: DiscountConfig): string {
+export function formatDiscount(
+  discount: DiscountConfig,
+  currencyCode: string,
+): string {
+  const currencyFormatter = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: currencyCode,
+  });
+
   switch (discount.type) {
     case "FIXED_PRICE":
       return `Fixed price: ${currencyFormatter.format(discount.value)}`;
@@ -57,10 +60,10 @@ export function formatDiscount(discount: DiscountConfig): string {
   }
 }
 
-export function getRuleDisplayData(rule: CPRule) {
+export function getRuleDisplayData(rule: CPRule, currencyCode: string) {
   return {
     applyTo: formatApplyTo(rule.productCondition),
-    discount: formatDiscount(rule.discount),
+    discount: formatDiscount(rule.discount, currencyCode),
   };
 }
 

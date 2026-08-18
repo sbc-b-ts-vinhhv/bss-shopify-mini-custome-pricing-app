@@ -27,7 +27,7 @@ import {
   RuleFormValues,
   RuleStatus,
 } from "app/types/rule";
-import { calculateModifiedPrice } from "app/utils/pricing";
+import { calculateModifiedPrice, formatMoney } from "app/utils/pricing";
 import {
   discountTypeOptions,
   productConditionOptions,
@@ -38,6 +38,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useProductTags } from "app/hooks/useProductTags";
 import { useProducts } from "app/hooks/useProducts";
+import { useShopSettings } from "app/hooks/useShopSettings";
 import styles from "./RuleForm.module.css";
 
 type RuleFormMode = "create" | "edit";
@@ -70,6 +71,8 @@ function toFormValues(rule?: CPRule | null): RuleFormValues {
 export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
   const navigate = useNavigate();
   const shopify = useAppBridge();
+  const { shop } = useShopSettings();
+  const currencyCode = shop?.currencyCode ?? "USD";
   const [values, setValues] = useState<RuleFormValues>(() =>
     toFormValues(initialRule),
   );
@@ -366,12 +369,12 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
         </IndexTable.Cell>
         <IndexTable.Cell>
           <Text as="span" tone="subdued">
-            {originalPrice.toFixed(2)}
+            {formatMoney(originalPrice, currencyCode)}
           </Text>
         </IndexTable.Cell>
         <IndexTable.Cell>
           <Badge tone={modifiedPrice < originalPrice ? "success" : "info"}>
-            {modifiedPrice.toFixed(2)}
+            {formatMoney(modifiedPrice, currencyCode)}
           </Badge>
         </IndexTable.Cell>
       </IndexTable.Row>
@@ -463,14 +466,14 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                         }))
                       }
                     />
-                    <InlineStack align="space-between" blockAlign="center">
+                    {/* <InlineStack align="space-between" blockAlign="center">
                       <Text as="span" variant="bodySm" tone="subdued">
                         Current status
                       </Text>
                       <Badge tone={statusBadgeTone(values.status)}>
                         {values.status === "enabled" ? "Enabled" : "Disabled"}
                       </Badge>
-                    </InlineStack>
+                    </InlineStack> */}
                   </BlockStack>
                 </Card>
               </div>
@@ -627,7 +630,8 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                       helpText="The price will be adjusted based on your Shopify Markets setting."
                     />
                     <Text as="p" variant="bodySm" tone="subdued">
-                      Preview price at $100: ${pricePreview.toFixed(2)}
+                      Preview price at {formatMoney(100, currencyCode)}:{" "}
+                      {formatMoney(pricePreview, currencyCode)}
                     </Text>
                   </BlockStack>
                 </Card>

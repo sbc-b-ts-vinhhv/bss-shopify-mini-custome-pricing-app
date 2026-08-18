@@ -5,4 +5,5 @@ export interface Shop {
   email: string | null;
   ownerName: string | null;
   ownerFirstName: string | null;
+  currencyCode: string;
 }

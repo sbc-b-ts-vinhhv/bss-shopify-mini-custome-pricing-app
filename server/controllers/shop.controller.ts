@@ -106,6 +106,7 @@ export async function installShopController(ctx: RouterContext) {
     name: info.name,
     email: info.email,
     ownerName: info.shopOwnerName,
+    currencyCode: info.currencyCode,
   });
 
   // Cài lại app = AppInstallation mới = mất sạch app-data metafield của lần cài

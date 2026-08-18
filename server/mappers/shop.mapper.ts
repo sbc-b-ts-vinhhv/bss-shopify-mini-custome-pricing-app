@@ -7,6 +7,7 @@ export interface ShopDTO {
   email: string | null;
   ownerName: string | null;
   ownerFirstName: string | null;
+  currencyCode: string;
 }
 
 /** `token` cố tình không có mặt ở đây — không bao giờ serialize ra API. */
@@ -21,5 +22,6 @@ export function toShopDTO(shop: Shop): ShopDTO {
     email: shop.email,
     ownerName: shop.ownerName,
     ownerFirstName,
+    currencyCode: shop.currencyCode,
   };
 }

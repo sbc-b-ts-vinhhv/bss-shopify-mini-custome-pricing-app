@@ -24,6 +24,7 @@ export class Shop extends Model<
   declare name: string;
   declare email: string | null;
   declare ownerName: CreationOptional<string | null>;
+  declare currencyCode: CreationOptional<string>;
 
   declare status: CreationOptional<ShopStatus>;
 
@@ -67,6 +68,12 @@ Shop.init(
     ownerName: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+
+    currencyCode: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "USD",
     },
 
     status: {

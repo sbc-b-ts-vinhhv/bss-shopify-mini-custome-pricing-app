@@ -75,6 +75,7 @@ export async function syncShopFromShopify(shopDomain: string) {
   shop.name = info.name;
   shop.email = info.email;
   shop.ownerName = info.shopOwnerName;
+  shop.currencyCode = info.currencyCode;
 
   await shop.save();
 
