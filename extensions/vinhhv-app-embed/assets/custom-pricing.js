@@ -171,17 +171,8 @@
   };
 
   if (!rule) {
-    console.log(
-      "[custom-pricing] không rule nào khớp — giữ nguyên giá, không đụng DOM",
-    );
     return;
   }
-
-  console.log(
-    "[custom-pricing] rule thắng:",
-    rule.name,
-    "(priority " + rule.priority + ")",
-  );
 
   /**
    * Thứ tự từ hẹp tới rộng: theme nào cũng có vài class chung chung như .price,
@@ -234,7 +225,6 @@
       if (el) {
         if (matchedSelector !== list[i]) {
           matchedSelector = list[i];
-          console.log('[custom-pricing] dùng selector "' + list[i] + '"');
         }
 
         return el;
