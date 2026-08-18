@@ -284,9 +284,10 @@
 
     var discounted = applyDiscount(variant.price, rule);
 
-    // Rule không làm đổi giá variant này → để nguyên markup của theme.
-    if (discounted === variant.price) {
-      return;
+    // Rule apply ra giá cao hơn giá gốc → không được hiển thị giá cao hơn cho
+    // khách, hiển thị lại giá gốc như chưa có rule.
+    if (discounted >= variant.price) {
+      discounted = variant.price;
     }
 
     // Chặn vòng lặp với MutationObserver: lần ghi của chính mình sẽ rơi vào đây.

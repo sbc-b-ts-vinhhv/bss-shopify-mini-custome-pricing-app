@@ -82,6 +82,7 @@ export async function syncCurrentShopController(ctx: RouterContext) {
   const shopDomain = requireShopDomain(ctx);
 
   const shop = await syncShopFromShopify(shopDomain);
+  console.log(shop)
 
   ok(ctx, toShopDTO(shop));
 }

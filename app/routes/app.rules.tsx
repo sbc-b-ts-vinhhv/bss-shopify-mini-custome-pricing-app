@@ -34,8 +34,12 @@ export default function RulesPage() {
 
   const [ruleToDelete, setRuleToDelete] = useState<CPRule | null>(null);
   const [processingRuleId, setProcessingRuleId] = useState<string | null>(null);
-  const { selectedResources, allResourcesSelected, handleSelectionChange } =
-    useIndexResourceState(selectableRules);
+  const {
+    selectedResources,
+    allResourcesSelected,
+    handleSelectionChange,
+    removeSelectedResources,
+  } = useIndexResourceState(selectableRules);
 
   const handleDuplicate = async (rule: CPRule) => {
     setProcessingRuleId(rule.id);
@@ -57,6 +61,7 @@ export default function RulesPage() {
     try {
       await deleteRule(ruleToDelete.id).unwrap();
       shopify.toast.show(`Removed "${ruleToDelete.name}"`);
+      removeSelectedResources([ruleToDelete.id]);
       setRuleToDelete(null);
     } catch (error) {
       shopify.toast.show("Could not remove rule", { isError: true });

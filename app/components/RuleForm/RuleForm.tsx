@@ -629,10 +629,6 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                       autoComplete="off"
                       helpText="The price will be adjusted based on your Shopify Markets setting."
                     />
-                    <Text as="p" variant="bodySm" tone="subdued">
-                      Preview price at {formatMoney(100, currencyCode)}:{" "}
-                      {formatMoney(pricePreview, currencyCode)}
-                    </Text>
                   </BlockStack>
                 </Card>
               </div>
