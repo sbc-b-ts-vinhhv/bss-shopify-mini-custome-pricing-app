@@ -58,7 +58,6 @@ export async function createRuleController(ctx: RouterContext) {
     productTags: body.productTags,
     discountType: body.discountType,
     discountValue: body.discountValue,
-    endAt: body.endAt,
   });
 
   ok(ctx, toRuleDTO(rule), 201);

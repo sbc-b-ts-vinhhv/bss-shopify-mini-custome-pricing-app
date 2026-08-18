@@ -43,7 +43,6 @@ export interface MetafieldRule {
   id: string;
   name: string;
   priority: number;
-  endAt: string | null;
   productCondition: { type: ProductConditionType; tags: string[] };
   discount: { type: DiscountType; value: number };
 }
@@ -77,12 +76,7 @@ export async function getAppInstallationId(
   return id;
 }
 
-/**
- * Chỉ  rule enable, sort priority giảm dần
- *
- * endAt vẫn giữ trong payload: metafield được theme cache, rule hết hạn giữa
- * hai lần sync thì phía storefront phải tự loại (Task 7).
- */
+/** Chỉ rule enable, sort priority giảm dần. */
 export async function buildRulesPayload(shopId: number): Promise<RulesPayload> {
   const rules = await Rule.findAll({
     where: { shopId, status: "enabled" },
@@ -98,7 +92,6 @@ export async function buildRulesPayload(shopId: number): Promise<RulesPayload> {
       id: String(rule.id),
       name: rule.name,
       priority: rule.priority,
-      endAt: rule.endAt ? rule.endAt.toISOString() : null,
       productCondition: {
         type: rule.productConditionType,
         tags: rule.productConditionType === "TAGS" ? rule.productTags : [],

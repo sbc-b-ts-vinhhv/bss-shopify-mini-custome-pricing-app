@@ -26,7 +26,6 @@ export interface CPRule {
   discount: DiscountConfig;
 
   createdAt: string;
-  endAt?: string | null;
   updatedAt: string;
 }
 

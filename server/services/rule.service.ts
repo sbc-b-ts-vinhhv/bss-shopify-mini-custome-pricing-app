@@ -18,25 +18,6 @@ export interface CreateRuleInput {
   productTags?: string[];
   discountType: DiscountType;
   discountValue: number;
-  endAt?: string | null;
-}
-
-function parseEndAt(endAt?: string | null): Date | null | undefined {
-  if (endAt === undefined) {
-    return undefined;
-  }
-
-  if (endAt === null) {
-    return null;
-  }
-
-  const parsed = new Date(endAt);
-
-  if (Number.isNaN(parsed.getTime())) {
-    throw AppError.badRequest("Invalid endAt");
-  }
-
-  return parsed;
 }
 
 export interface UpdateRuleInput {
@@ -47,14 +28,10 @@ export interface UpdateRuleInput {
   productTags?: string[];
   discountType?: DiscountType;
   discountValue?: number;
-  endAt?: string | null;
 }
 
 export async function createRule(data: CreateRuleInput) {
-  const rule = await Rule.create({
-    ...data,
-    endAt: parseEndAt(data.endAt),
-  });
+  const rule = await Rule.create(data);
 
   await safeSyncRulesToMetafield(data.shopId);
 
@@ -96,10 +73,7 @@ export async function updateRule(
     }
   }
 
-  await rule.update({
-    ...data,
-    endAt: parseEndAt(data.endAt),
-  });
+  await rule.update(data);
 
   await safeSyncRulesToMetafield(shopId);
 
@@ -119,7 +93,6 @@ export async function duplicateRule(id: number, shopId: number) {
     productTags: rule.productTags,
     discountType: rule.discountType,
     discountValue: rule.discountValue,
-    endAt: rule.endAt,
   });
 
   // Bản sao luôn disabled nên payload không đổi — vẫn sync để không phải nhớ

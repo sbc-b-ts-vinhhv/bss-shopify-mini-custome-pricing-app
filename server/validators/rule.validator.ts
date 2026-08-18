@@ -40,18 +40,6 @@ function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
-function parseDate(value: unknown): boolean {
-  if (value === null || value === undefined) {
-    return true;
-  }
-
-  if (typeof value !== "string" || value.trim().length === 0) {
-    return false;
-  }
-
-  return !Number.isNaN(new Date(value).getTime());
-}
-
 export function validateDiscountValue(
   discountType: DiscountType,
   discountValue: unknown,
@@ -124,10 +112,6 @@ export function validateCreateRuleInput(body: unknown) {
     }
   }
 
-  if (!parseDate(body.endAt)) {
-    throw AppError.badRequest("Invalid endAt");
-  }
-
   return body as {
     name: string;
     status?: RuleStatus;
@@ -136,7 +120,6 @@ export function validateCreateRuleInput(body: unknown) {
     productTags?: string[];
     discountType: DiscountType;
     discountValue: number;
-    endAt?: string | null;
   };
 }
 
@@ -153,7 +136,6 @@ export function validateUpdateRuleInput(body: unknown) {
     "productTags",
     "discountType",
     "discountValue",
-    "endAt",
   ].some((key) => Object.prototype.hasOwnProperty.call(body, key));
 
   if (!hasAnyField) {
@@ -226,10 +208,6 @@ export function validateUpdateRuleInput(body: unknown) {
     }
   }
 
-  if (!parseDate(body.endAt)) {
-    throw AppError.badRequest("Invalid endAt");
-  }
-
   return body as {
     name?: string;
     status?: RuleStatus;
@@ -238,6 +216,5 @@ export function validateUpdateRuleInput(body: unknown) {
     productTags?: string[];
     discountType?: DiscountType;
     discountValue?: number;
-    endAt?: string | null;
   };
 }

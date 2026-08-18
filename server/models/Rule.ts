@@ -31,8 +31,6 @@ export class Rule extends Model<
   declare discountType: DiscountType;
   declare discountValue: number;
 
-  declare endAt: Date | null;
-
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -107,11 +105,6 @@ Rule.init(
     discountValue: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-    },
-
-    endAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
     },
 
     createdAt: {

@@ -14,7 +14,6 @@ export interface RuleDTO {
         value: number;
     };
     createdAt: string;
-    endAt: string | null;
     updatedAt: string;
 }
 
@@ -33,7 +32,6 @@ export function toRuleDTO(rule: Rule): RuleDTO {
             value: Number(rule.discountValue),
         },
         createdAt: rule.createdAt.toISOString(),
-        endAt: rule.endAt ? rule.endAt.toISOString() : null,
         updatedAt: rule.updatedAt.toISOString(),
     }
 }

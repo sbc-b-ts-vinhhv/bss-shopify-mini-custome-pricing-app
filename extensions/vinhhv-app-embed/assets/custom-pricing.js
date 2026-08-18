@@ -31,14 +31,6 @@
     });
   }
 
-  /**
-   * Metafield được theme cache, rule có thể hết hạn giữa hai lần sync — nên hạn
-   * phải kiểm tại thời điểm render, không tin vào việc server đã lọc.
-   */
-  function isActive(rule, now) {
-    return !rule.endAt || new Date(rule.endAt).getTime() > now;
-  }
-
   function matches(rule, productTags) {
     var condition = rule.productCondition || {};
 
@@ -66,10 +58,8 @@
    * đầu tiên là rule thắng. Không sort lại ở đây.
    */
   function findRule(list, productTags) {
-    var now = Date.now();
-
     for (var i = 0; i < list.length; i++) {
-      if (isActive(list[i], now) && matches(list[i], productTags)) {
+      if (matches(list[i], productTags)) {
         return list[i];
       }
     }
