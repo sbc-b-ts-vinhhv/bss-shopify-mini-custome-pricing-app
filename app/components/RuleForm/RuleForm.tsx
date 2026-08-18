@@ -48,6 +48,13 @@ type RuleFormProps = {
   onSubmit: (values: RuleFormValues) => Promise<void>;
 };
 
+type FormErrors = {
+  name?: string;
+  priority?: string;
+  tags?: string;
+  discountValue?: string;
+};
+
 function toFormValues(rule?: CPRule | null): RuleFormValues {
   return {
     name: rule?.name ?? "",
@@ -69,6 +76,98 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
   const [tagDraft, setTagDraft] = useState("");
   const [showPricingDetails, setShowPricingDetails] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Error
+  const [errors, setErrors] = useState<FormErrors>({});
+  const validateDiscountValue = (
+    value: string | number,
+    discountType: DiscountType = values.discountType,
+  ) => {
+    const rawValue = String(value).trim();
+
+    if (!rawValue) {
+      return "Amount is required";
+    }
+
+    const discountValue = Number(rawValue);
+
+    if (!Number.isFinite(discountValue)) {
+      return "Amount must be a valid number";
+    }
+
+    if (discountValue <= 0) {
+      return "Amount must be greater than 0";
+    }
+
+    if (discountType === "DECREASE_PERCENTAGE" && discountValue > 100) {
+      return "Percentage cannot exceed 100%";
+    }
+
+    return undefined;
+  };
+
+  // Validate từng field
+  const validateField = (
+    field: keyof RuleFormValues,
+    value: string | number | string[],
+  ) => {
+    let error: string | undefined;
+
+    switch (field) {
+      case "name": {
+        const name = String(value).trim();
+
+        if (!name) {
+          error = "Rule name is required";
+        } else if (name.length < 3) {
+          error = "Rule name must be at least 3 characters";
+        } else if (name.length > 100) {
+          error = "Rule name must not exceed 100 characters";
+        }
+
+        break;
+      }
+
+      case "priority": {
+        const priority = Number(value);
+
+        if (String(value).trim() === "") {
+          error = "Priority is required";
+        } else if (!Number.isInteger(priority)) {
+          error = "Priority must be a whole number";
+        } else if (priority < 0) {
+          error = "Priority cannot be negative";
+        }
+
+        break;
+      }
+
+      case "tags": {
+        const tags = value as string[];
+
+        if (values.productConditionType === "TAGS" && tags.length === 0) {
+          error = "Please add at least one product tag";
+        }
+
+        break;
+      }
+
+      case "discountValue": {
+        if (typeof value === "string" || typeof value === "number") {
+          error = validateDiscountValue(value, values.discountType);
+        }
+
+        break;
+      }
+    }
+
+    setErrors((current) => ({
+      ...current,
+      [field]: error,
+    }));
+
+    return !error;
+  };
 
   const {
     tags: shopTags,
@@ -124,7 +223,54 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
 
   const previewRows = usePricingPreview(previewRule, products);
 
+  // Validate:
+  const validateForm = () => {
+    const nextErrors: FormErrors = {};
+
+    const name = values.name.trim();
+
+    if (!name) {
+      nextErrors.name = "Rule name is required";
+    } else if (name.length < 3) {
+      nextErrors.name = "Rule name must be at least 3 characters";
+    } else if (name.length > 100) {
+      nextErrors.name = "Rule name must not exceed 100 characters";
+    }
+
+    const priority = Number(values.priority);
+
+    if (String(values.priority).trim() === "") {
+      nextErrors.priority = "Priority is required";
+    } else if (!Number.isInteger(priority)) {
+      nextErrors.priority = "Priority must be a whole number";
+    } else if (priority < 0) {
+      nextErrors.priority = "Priority cannot be negative";
+    }
+
+    if (values.productConditionType === "TAGS" && values.tags.length === 0) {
+      nextErrors.tags = "Please add at least one product tag";
+    }
+
+    const discountError = validateDiscountValue(
+      values.discountValue,
+      values.discountType,
+    );
+
+    if (discountError) {
+      nextErrors.discountValue = discountError;
+    }
+
+    setErrors(nextErrors);
+
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const submitValues = async () => {
+    if (!validateForm()) {
+      shopify.toast.show("Please fix the errors before saving");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -132,13 +278,14 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
         ...values,
         name: values.name.trim(),
         tags: values.tags.filter(Boolean),
-        priority: Number(values.priority) || 0,
+        priority: Number(values.priority),
         discountValue: values.discountValue,
       });
 
       shopify.toast.show(
         mode === "create" ? "Pricing rule created" : "Pricing rule updated",
       );
+
       navigate("/app/rules");
     } catch (error) {
       shopify.toast.show(
@@ -151,6 +298,7 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
 
   const addTag = (candidate: string) => {
     const nextTag = candidate.trim();
+
     if (!nextTag) return;
 
     registerTag(nextTag);
@@ -162,6 +310,12 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
         ? current.tags
         : [...current.tags, nextTag],
     }));
+
+    setErrors((current) => ({
+      ...current,
+      tags: undefined,
+    }));
+
     setTagDraft("");
   };
 
@@ -265,18 +419,30 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                     <TextField
                       label="Name"
                       value={values.name}
-                      onChange={(name) =>
-                        setValues((current) => ({ ...current, name }))
-                      }
+                      onChange={(name) => {
+                        setValues((current) => ({
+                          ...current,
+                          name,
+                        }));
+
+                        validateField("name", name);
+                      }}
+                      error={errors.name}
                       autoComplete="off"
                     />
 
                     <TextField
                       label="Priority"
                       value={String(values.priority)}
-                      onChange={(priority) =>
-                        setValues((current) => ({ ...current, priority }))
-                      }
+                      onChange={(priority) => {
+                        setValues((current) => ({
+                          ...current,
+                          priority,
+                        }));
+
+                        validateField("priority", priority);
+                      }}
+                      error={errors.priority}
                       type="number"
                       min={0}
                       autoComplete="off"
@@ -321,12 +487,27 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                       title=""
                       choices={productConditionOptions}
                       selected={[values.productConditionType]}
-                      onChange={(selected) =>
+                      onChange={(selected) => {
+                        const productConditionType = selected[0] as
+                          "ALL" | "TAGS";
+
                         setValues((current) => ({
                           ...current,
-                          productConditionType: selected[0] as "ALL" | "TAGS",
-                        }))
-                      }
+                          productConditionType,
+                        }));
+
+                        if (productConditionType === "ALL") {
+                          setErrors((current) => ({
+                            ...current,
+                            tags: undefined,
+                          }));
+                        } else if (values.tags.length === 0) {
+                          setErrors((current) => ({
+                            ...current,
+                            tags: "Please add at least one product tag",
+                          }));
+                        }
+                      }}
                     />
 
                     <Collapsible
@@ -356,15 +537,25 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                             </Box>
                           }
                           textField={
-                            <Autocomplete.TextField
-                              label="Product tags"
-                              value={tagDraft}
-                              onChange={setTagDraft}
-                              prefix={<Icon source={SearchIcon} tone="base" />}
-                              placeholder="Search or create a tag"
-                              autoComplete="off"
-                              error={tagsError ?? undefined}
-                            />
+                            <BlockStack gap="100">
+                              <Autocomplete.TextField
+                                label="Product tags"
+                                value={tagDraft}
+                                onChange={setTagDraft}
+                                prefix={
+                                  <Icon source={SearchIcon} tone="base" />
+                                }
+                                placeholder="Search or create a tag"
+                                autoComplete="off"
+                                error={Boolean(errors.tags || tagsError)}
+                              />
+
+                              {(errors.tags || tagsError) && (
+                                <Text as="p" variant="bodySm" tone="critical">
+                                  {errors.tags || tagsError}
+                                </Text>
+                              )}
+                            </BlockStack>
                           }
                         />
                         <InlineStack gap="200">
@@ -392,22 +583,45 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
                       title=""
                       choices={discountTypeOptions}
                       selected={[values.discountType]}
-                      onChange={(selected) =>
+                      onChange={(selected) => {
+                        const discountType = selected[0] as DiscountType;
+
                         setValues((current) => ({
                           ...current,
-                          discountType: selected[0] as DiscountType,
-                        }))
-                      }
+                          discountType,
+                        }));
+
+                        const error = validateDiscountValue(
+                          values.discountValue,
+                          discountType,
+                        );
+
+                        setErrors((current) => ({
+                          ...current,
+                          discountValue: error,
+                        }));
+                      }}
                     />
                     <TextField
                       label="Amount"
                       value={String(values.discountValue)}
-                      onChange={(discountValue) =>
+                      onChange={(discountValue) => {
                         setValues((current) => ({
                           ...current,
                           discountValue,
-                        }))
-                      }
+                        }));
+
+                        const error = validateDiscountValue(
+                          discountValue,
+                          values.discountType,
+                        );
+
+                        setErrors((current) => ({
+                          ...current,
+                          discountValue: error,
+                        }));
+                      }}
+                      error={errors.discountValue}
                       inputMode="decimal"
                       autoComplete="off"
                       helpText="The price will be adjusted based on your Shopify Markets setting."
