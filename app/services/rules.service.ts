@@ -1,4 +1,4 @@
-import type { CPRule, RuleFormValues } from "../types/rule";
+import type { CPRule, MetafieldSyncStatus, RuleFormValues } from "../types/rule";
 import { apiRequest } from "./api-client";
 
 type RuleResponse = CPRule;
@@ -51,12 +51,16 @@ export async function updateRule(
   });
 }
 
-export async function deleteRule(id: string): Promise<{ id: string }> {
-  await apiRequest<void>(`/api/rules/${id}`, {
-    method: "DELETE",
-  });
+export async function deleteRule(
+  id: string,
+): Promise<{ id: string; metafieldSync?: MetafieldSyncStatus }> {
+  // 204 khi sync OK, 200 { metafieldSync } khi sync fail — xem deleteRuleController.
+  const result = await apiRequest<{ metafieldSync?: MetafieldSyncStatus } | null>(
+    `/api/rules/${id}`,
+    { method: "DELETE" },
+  );
 
-  return { id };
+  return { id, metafieldSync: result?.metafieldSync };
 }
 
 export async function duplicateRule(id: string): Promise<CPRule> {

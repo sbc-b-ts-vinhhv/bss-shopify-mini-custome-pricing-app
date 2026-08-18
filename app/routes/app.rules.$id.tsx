@@ -16,8 +16,8 @@ export default function EditRulePage() {
     rule?.id === id ? rule : (items.find((item) => item.id === id) ?? null);
 
   const handleSubmit = async (values: RuleFormValues) => {
-    if (!id) return;
-    await dispatch(updateRule({ id, values })).unwrap();
+    if (!id) throw new Error("Missing rule id");
+    return dispatch(updateRule({ id, values })).unwrap();
   };
 
   if (!loadedRule && id) {

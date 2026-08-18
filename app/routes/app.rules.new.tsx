@@ -13,7 +13,7 @@ export default function NewRulePage() {
   const { shop, loading, error } = useShopSettings();
 
   const handleSubmit = async (values: RuleFormValues) => {
-    await dispatch(createRule(values)).unwrap();
+    return dispatch(createRule(values)).unwrap();
   };
 
   // createRule lấy shopId từ store, nên chờ shop nạp xong mới cho nhập form.

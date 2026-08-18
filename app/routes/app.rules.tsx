@@ -45,8 +45,16 @@ export default function RulesPage() {
     setProcessingRuleId(rule.id);
 
     try {
-      await duplicateRule(rule.id).unwrap();
-      shopify.toast.show(`Duplicated "${rule.name}"`);
+      const duplicated = await duplicateRule(rule.id).unwrap();
+
+      if (duplicated.metafieldSync && !duplicated.metafieldSync.synced) {
+        shopify.toast.show(
+          `Duplicated "${rule.name}", but storefront pricing sync failed and will retry automatically`,
+          { isError: true },
+        );
+      } else {
+        shopify.toast.show(`Duplicated "${rule.name}"`);
+      }
     } catch {
       shopify.toast.show("Could not duplicate rule", { isError: true });
     } finally {
@@ -59,8 +67,17 @@ export default function RulesPage() {
     setProcessingRuleId(ruleToDelete.id);
 
     try {
-      await deleteRule(ruleToDelete.id).unwrap();
-      shopify.toast.show(`Removed "${ruleToDelete.name}"`);
+      const result = await deleteRule(ruleToDelete.id).unwrap();
+
+      if (result.metafieldSync && !result.metafieldSync.synced) {
+        shopify.toast.show(
+          `Removed "${ruleToDelete.name}", but storefront pricing sync failed and will retry automatically`,
+          { isError: true },
+        );
+      } else {
+        shopify.toast.show(`Removed "${ruleToDelete.name}"`);
+      }
+
       removeSelectedResources([ruleToDelete.id]);
       setRuleToDelete(null);
     } catch (error) {

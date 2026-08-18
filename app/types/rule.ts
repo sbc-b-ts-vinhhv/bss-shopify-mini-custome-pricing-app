@@ -15,6 +15,11 @@ export interface DiscountConfig {
   value: number;
 }
 
+export interface MetafieldSyncStatus {
+  synced: boolean;
+  reason?: string;
+}
+
 export interface CPRule {
   id: string;
   // shop_id
@@ -27,6 +32,10 @@ export interface CPRule {
 
   createdAt: string;
   updatedAt: string;
+
+  // Có mặt sau create/update/duplicate — cho biết rule đã đồng bộ ra
+  // storefront metafield chưa, vì save DB và sync Shopify là 2 bước tách rời.
+  metafieldSync?: MetafieldSyncStatus;
 }
 
 export interface RuleFormValues {

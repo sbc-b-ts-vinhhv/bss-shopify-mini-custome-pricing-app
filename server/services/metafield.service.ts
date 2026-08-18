@@ -114,6 +114,8 @@ export type SyncResult =
     };
 
 async function pushRulesFor(shop: Shop): Promise<SyncResult> {
+  // throw new AppError("TEST: simulate metafield sync failure", 502); // TEst lỗi khi chưa sync
+
   // Token trong DB sau khi gỡ app là token chết, gọi Shopify chỉ nhận 401.
   if (shop.status === "uninstalled") {
     return { synced: false, reason: "uninstalled", ruleCount: 0 };
@@ -174,14 +176,24 @@ export async function syncRulesToMetafieldByShopId(shopId: number) {
   return pushRulesFor(await getShopById(shopId));
 }
 
+export interface MetafieldSyncStatus {
+  synced: boolean;
+  reason?: string;
+}
+
 /**
  * Bản không bao giờ throw, dùng trong vòng đời rule.
  *
  * Rule đã nằm trong MySQL rồi — nếu Shopify lỗi/rate-limit thì cứ trả 200 cho
  * merchant, metafield lệch thì backfill bằng POST /api/rules/sync-metafield.
  * Để lỗi nổi lên sẽ khiến UI báo "tạo rule thất bại" trong khi rule đã tạo xong.
+ *
+ * Trả về trạng thái sync (thay vì void) để caller đính kèm vào response, cho
+ * UI cảnh báo merchant khi metafield lệch với rule vừa lưu.
  */
-export async function safeSyncRulesToMetafield(shopId: number): Promise<void> {
+export async function safeSyncRulesToMetafield(
+  shopId: number,
+): Promise<MetafieldSyncStatus> {
   try {
     const result = await syncRulesToMetafieldByShopId(shopId);
 
@@ -189,8 +201,16 @@ export async function safeSyncRulesToMetafield(shopId: number): Promise<void> {
       console.warn(
         `[metafield] skipped sync for shopId=${shopId}: ${result.reason}`,
       );
+
+      return { synced: false, reason: result.reason };
     }
+
+    return { synced: true };
   } catch (error) {
     console.error(`[metafield] sync failed for shopId=${shopId}:`, error);
+
+    const reason = error instanceof AppError ? error.message : "unknown_error";
+
+    return { synced: false, reason };
   }
 }

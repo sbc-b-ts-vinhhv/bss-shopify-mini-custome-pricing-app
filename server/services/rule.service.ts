@@ -33,9 +33,9 @@ export interface UpdateRuleInput {
 export async function createRule(data: CreateRuleInput) {
   const rule = await Rule.create(data);
 
-  await safeSyncRulesToMetafield(data.shopId);
+  const metafieldSync = await safeSyncRulesToMetafield(data.shopId);
 
-  return rule;
+  return { rule, metafieldSync };
 }
 
 export async function listRules(shopId: number) {
@@ -75,9 +75,9 @@ export async function updateRule(
 
   await rule.update(data);
 
-  await safeSyncRulesToMetafield(shopId);
+  const metafieldSync = await safeSyncRulesToMetafield(shopId);
 
-  return rule;
+  return { rule, metafieldSync };
 }
 
 export async function duplicateRule(id: number, shopId: number) {
@@ -97,9 +97,9 @@ export async function duplicateRule(id: number, shopId: number) {
 
   // Bản sao luôn disabled nên payload không đổi — vẫn sync để không phải nhớ
   // sửa chỗ này nếu sau đó default status của bản sao thay đổi.
-  await safeSyncRulesToMetafield(shopId);
+  const metafieldSync = await safeSyncRulesToMetafield(shopId);
 
-  return copy;
+  return { rule: copy, metafieldSync };
 }
 
 export async function deleteRule(id: number, shopId: number) {
@@ -107,5 +107,5 @@ export async function deleteRule(id: number, shopId: number) {
 
   await rule.destroy();
 
-  await safeSyncRulesToMetafield(shopId);
+  return safeSyncRulesToMetafield(shopId);
 }

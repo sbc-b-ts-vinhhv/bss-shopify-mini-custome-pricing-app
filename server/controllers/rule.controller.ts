@@ -49,7 +49,7 @@ export async function createRuleController(ctx: RouterContext) {
   const shopId = await requireShopId(ctx);
   const body = validateCreateRuleInput(ctx.request.body);
 
-  const rule = await createRule({
+  const { rule, metafieldSync } = await createRule({
     shopId,
     name: body.name,
     status: body.status,
@@ -60,7 +60,7 @@ export async function createRuleController(ctx: RouterContext) {
     discountValue: body.discountValue,
   });
 
-  ok(ctx, toRuleDTO(rule), 201);
+  ok(ctx, { ...toRuleDTO(rule), metafieldSync }, 201);
 }
 
 export async function listRulesController(ctx: RouterContext) {
@@ -83,23 +83,35 @@ export async function updateRuleController(ctx: RouterContext) {
   const shopId = await requireShopId(ctx);
   const data = validateUpdateRuleInput(ctx.request.body);
 
-  const rule = await updateRule(requireRuleId(ctx), shopId, data);
+  const { rule, metafieldSync } = await updateRule(
+    requireRuleId(ctx),
+    shopId,
+    data,
+  );
 
-  ok(ctx, toRuleDTO(rule));
+  ok(ctx, { ...toRuleDTO(rule), metafieldSync });
 }
 
 export async function duplicateRuleController(ctx: RouterContext) {
   const shopId = await requireShopId(ctx);
 
-  const rule = await duplicateRule(requireRuleId(ctx), shopId);
+  const { rule, metafieldSync } = await duplicateRule(
+    requireRuleId(ctx),
+    shopId,
+  );
 
-  ok(ctx, toRuleDTO(rule), 201);
+  ok(ctx, { ...toRuleDTO(rule), metafieldSync }, 201);
 }
 
 export async function deleteRuleController(ctx: RouterContext) {
   const shopId = await requireShopId(ctx);
 
-  await deleteRule(requireRuleId(ctx), shopId);
+  const metafieldSync = await deleteRule(requireRuleId(ctx), shopId);
+
+  if (!metafieldSync.synced) {
+    ok(ctx, { metafieldSync });
+    return;
+  }
 
   noContent(ctx);
 }

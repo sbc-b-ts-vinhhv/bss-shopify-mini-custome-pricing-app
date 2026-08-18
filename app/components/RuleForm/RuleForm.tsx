@@ -46,7 +46,7 @@ type RuleFormMode = "create" | "edit";
 type RuleFormProps = {
   mode: RuleFormMode;
   initialRule?: CPRule | null;
-  onSubmit: (values: RuleFormValues) => Promise<void>;
+  onSubmit: (values: RuleFormValues) => Promise<CPRule>;
 };
 
 type FormErrors = {
@@ -277,7 +277,7 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
     setSubmitting(true);
 
     try {
-      await onSubmit({
+      const savedRule = await onSubmit({
         ...values,
         name: values.name.trim(),
         tags: values.tags.filter(Boolean),
@@ -285,9 +285,16 @@ export function RuleForm({ mode, initialRule, onSubmit }: RuleFormProps) {
         discountValue: values.discountValue,
       });
 
-      shopify.toast.show(
-        mode === "create" ? "Pricing rule created" : "Pricing rule updated",
-      );
+      if (savedRule.metafieldSync && !savedRule.metafieldSync.synced) {
+        shopify.toast.show(
+          "Rule saved, but storefront pricing sync failed and will retry automatically",
+          { isError: true },
+        );
+      } else {
+        shopify.toast.show(
+          mode === "create" ? "Pricing rule created" : "Pricing rule updated",
+        );
+      }
 
       navigate("/app/rules");
     } catch (error) {
