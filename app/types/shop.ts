@@ -6,4 +6,5 @@ export interface Shop {
   ownerName: string | null;
   ownerFirstName: string | null;
   currencyCode: string;
+  currencyChangedAt: string | null;
 }

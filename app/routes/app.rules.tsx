@@ -19,18 +19,30 @@ import {
 } from "@shopify/polaris";
 import { EditIcon, DuplicateIcon, DeleteIcon } from "@shopify/polaris-icons";
 import { useRules } from "app/hooks/useRules";
+import { useShopSettings } from "app/hooks/useShopSettings";
+import { acknowledgeCurrencyChange } from "app/services/shop.service";
+import { useAppDispatch } from "app/store/hooks";
+import { fetchShop } from "app/store/slices/shopSlice";
 import { CPRule } from "app/types/rule";
 import { formatDate, getRuleDisplayData } from "app/utils/rule-display";
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 
 export default function RulesPage() {
+  const dispatch = useAppDispatch();
+  const { shop } = useShopSettings();
   const shopify = useAppBridge();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { rules, loading, error, refetch, duplicateRule, deleteRule } =
     useRules();
   const selectableRules = rules.map((rule) => ({ id: rule.id }));
+
+  // Khi merchant change currency
+  const handleAcknowledgeCurrencyChange = async () => {
+    await acknowledgeCurrencyChange();
+    dispatch(fetchShop());
+  };
 
   const [ruleToDelete, setRuleToDelete] = useState<CPRule | null>(null);
   const [processingRuleId, setProcessingRuleId] = useState<string | null>(null);
@@ -186,6 +198,24 @@ export default function RulesPage() {
       }}
     >
       <BlockStack gap="400">
+        {/* Khi merchant đổi currency thì phải check lại */}
+        {shop?.currencyChangedAt && (
+          <Banner
+            tone="warning"
+            title={`Shop currency changed to ${shop.currencyCode}`}
+            action={{
+              content: "I've reviewed my rules",
+              onAction: handleAcknowledgeCurrencyChange,
+            }}
+          >
+            <p>
+              Existing rule values were entered in the previous currency and
+              were NOT converted automatically. Please review the price/decrease
+              value of every rule before your storefront pricing is trusted
+              again.
+            </p>
+          </Banner>
+        )}
         {error && (
           <Banner
             tone="critical"

@@ -26,6 +26,8 @@ export class Shop extends Model<
   declare ownerName: CreationOptional<string | null>;
   declare currencyCode: CreationOptional<string>;
 
+  declare currencyChangedAt: CreationOptional<Date | null>;
+
   declare status: CreationOptional<ShopStatus>;
 
   declare createdAt: CreationOptional<Date>;
@@ -74,6 +76,11 @@ Shop.init(
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: "USD",
+    },
+
+    currencyChangedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
 
     status: {

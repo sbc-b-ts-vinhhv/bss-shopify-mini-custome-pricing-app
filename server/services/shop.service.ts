@@ -118,3 +118,12 @@ export async function createOrReactivateShop(input: {
 
   return existingShop;
 }
+
+export async function acknowledgeCurrencyChange(shopDomain: string) {
+  const shop = await getShopByDomain(shopDomain);
+
+  shop.currencyChangedAt = null;
+  await shop.save();
+
+  return shop;
+}

@@ -1,4 +1,4 @@
-import type { Shop } from "../models/index.js";
+import { Shop } from "server/models/Shop.js";
 
 export interface ShopDTO {
   id: string;
@@ -8,11 +8,10 @@ export interface ShopDTO {
   ownerName: string | null;
   ownerFirstName: string | null;
   currencyCode: string;
+  currencyChangedAt: string | null;
 }
 
-/** `token` cố tình không có mặt ở đây — không bao giờ serialize ra API. */
 export function toShopDTO(shop: Shop): ShopDTO {
-  // Shopify chỉ trả họ tên đầy đủ ("John Smith"), first name là token đầu tiên.
   const ownerFirstName = shop.ownerName?.trim().split(/\s+/)[0] || null;
 
   return {
@@ -23,5 +22,8 @@ export function toShopDTO(shop: Shop): ShopDTO {
     ownerName: shop.ownerName,
     ownerFirstName,
     currencyCode: shop.currencyCode,
+    currencyChangedAt: shop.currencyChangedAt
+      ? shop.currencyChangedAt.toISOString()
+      : null,
   };
 }

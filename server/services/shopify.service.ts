@@ -71,11 +71,18 @@ export async function syncShopFromShopify(shopDomain: string) {
   const info = await fetchShopInfo(shopDomain);
   const shop = await getShopByDomain(shopDomain);
 
+  const currencyJustChanged =
+    shop.currencyCode !== undefined && shop.currencyCode !== info.currencyCode;
+
   shop.shopifyId = info.id;
   shop.name = info.name;
   shop.email = info.email;
   shop.ownerName = info.shopOwnerName;
   shop.currencyCode = info.currencyCode;
+
+  if (currencyJustChanged) {
+    shop.currencyChangedAt = new Date();
+  }
 
   await shop.save();
 

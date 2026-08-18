@@ -1,6 +1,7 @@
 import type { RouterContext } from "@koa/router";
 
 import {
+  acknowledgeCurrencyChange,
   createOrReactivateShop,
   createShop,
   getShopByDomain,
@@ -83,6 +84,18 @@ export async function syncCurrentShopController(ctx: RouterContext) {
 
   const shop = await syncShopFromShopify(shopDomain);
   console.log(shop)
+
+  ok(ctx, toShopDTO(shop));
+}
+
+
+/**
+ * Merchant bấm "Đã rà soát lại rule" sau khi thấy banner cảnh báo đổi currency.
+ */
+export async function acknowledgeCurrencyChangeController(ctx: RouterContext) {
+  const shopDomain = requireShopDomain(ctx);
+
+  const shop = await acknowledgeCurrencyChange(shopDomain);
 
   ok(ctx, toShopDTO(shop));
 }

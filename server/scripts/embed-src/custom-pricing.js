@@ -68,12 +68,22 @@
   }
 
   /**
-   * Mọi tính toán bằng CENT.
+   * discountValue trong MySQL luôn là tiền theo BASE CURRENCY của shop (đơn vị
+   * merchant nhập trong admin). Còn priceCents truyền vào applyDiscount là
+   * variant.price lấy từ Liquid — khi shop bật Markets/multi-currency, giá này
+   * đã được Shopify quy đổi sẵn sang PRESENTMENT CURRENCY của khách (VD: VND).
    *
-   * Giá từ Liquid là cent (1999 = $19.99), còn discountValue lưu trong MySQL là
-   * đơn vị tiền (19.99) ⇒ nhân 100 cho FIXED_PRICE và DECREASE_FIXED.
-   * Percentage thì không, vì nó là tỉ lệ.
+   * Nếu không quy đổi discountValue theo cùng tỷ giá thì FIXED_PRICE/DECREASE_FIXED
+   * sẽ lẫn lộn hai loại tiền tệ (VD: fixed 100 USD hiển thị y nguyên "100 VND").
+   * Shopify.currency.rate là tỷ giá base→presentment tại thời điểm tải trang,
+   * dùng chung với tỷ giá Shopify đã áp cho variant.price nên khớp nhau.
    */
+  function currencyRate() {
+    var rate = Number(window.Shopify && window.Shopify.currency && window.Shopify.currency.rate);
+
+    return isFinite(rate) && rate > 0 ? rate : 1;
+  }
+
   function applyDiscount(priceCents, rule) {
     var discount = rule.discount || {};
     var value = Number(discount.value);
@@ -82,12 +92,13 @@
       return priceCents;
     }
 
+    var rate = currencyRate();
     var result;
 
     if (discount.type === "FIXED_PRICE") {
-      result = value * 100;
+      result = value * rate * 100;
     } else if (discount.type === "DECREASE_FIXED") {
-      result = priceCents - value * 100;
+      result = priceCents - value * rate * 100;
     } else if (discount.type === "DECREASE_PERCENTAGE") {
       var percent = Math.min(100, Math.max(0, value));
 
@@ -121,9 +132,41 @@
     return digits.replace(/\B(?=(\d{3})+(?!\d))/g, separator);
   }
 
-  function formatAmount(cents, spec) {
-    // toFixed tự làm tròn, nên amount_no_decimals với 1599 cent ra "16" chứ không phải "15".
-    var parts = (cents / 100).toFixed(spec.decimals).split(".");
+    /**
+   * shop.money_format quy định decimals theo BASE CURRENCY. Khi khách xem
+   * bằng presentment currency khác (VD: shop base USD nhưng khách xem VND),
+   * số chữ số thập phân thực tế phải theo VND (0), không phải theo money_format
+   * gốc (2) — nếu không giá sẽ bị làm tròn/hiển thị sai (VD: "2.660.000,00" thay
+   * vì "2.660.000"). Dùng Intl để tra decimals đúng theo currency code Shopify
+   * báo là đang active, giữ nguyên separator/symbol style của merchant.
+   */
+  function activeCurrencyDecimals() {
+    var code =
+      window.Shopify && window.Shopify.currency && window.Shopify.currency.active;
+
+    if (!code) {
+      return null;
+    }
+
+    try {
+      return new Intl.NumberFormat("en", {
+        style: "currency",
+        currency: code,
+      }).resolvedOptions().maximumFractionDigits;
+    } catch (error) {
+      return null;
+    }
+  }
+
+
+ function formatAmount(cents, spec) {
+    var decimals = activeCurrencyDecimals();
+
+    if (decimals === null) {
+      decimals = spec.decimals;
+    }
+
+    var parts = (cents / 100).toFixed(decimals).split(".");
     var result = groupThousands(parts[0], spec.thousands);
 
     if (parts[1]) {
@@ -260,6 +303,32 @@
 
   var warnedMissingSelector = false;
 
+  /**
+   * Nhiều theme (VD: Dawn) nhét badge "Sold out"/"Sale" làm con nằm chung trong
+   * đúng element giá (.price) mà mình ghi đè bằng innerHTML — ghi đè thẳng tay
+   * là xoá mất badge đó trên PDP. Trước khi ghi đè, giữ lại (clone) mọi badge
+   * tìm thấy trong el, rồi gắn lại sau khi đã thay xong phần giá.
+   */
+  var BADGE_SELECTOR =
+    '[class*="badge" i], [class*="sold-out" i], [class*="sold_out" i], [class*="soldout" i], [data-sold-out]';
+
+  function collectBadges(el) {
+    var found = el.querySelectorAll(BADGE_SELECTOR);
+    var clones = [];
+
+    for (var i = 0; i < found.length; i++) {
+      clones.push(found[i].cloneNode(true));
+    }
+
+    return clones;
+  }
+
+  function restoreBadges(el, badges) {
+    for (var i = 0; i < badges.length; i++) {
+      el.appendChild(badges[i]);
+    }
+  }
+
   function renderPrice() {
     var el = findPriceElement();
 
@@ -296,6 +365,7 @@
     }
 
     var discountedHtml = formatMoney(discounted, data.moneyFormat);
+    var badges = collectBadges(el);
 
     // money_format là "money without currency in HTML" — merchant được phép để
     // markup trong đó, nên phải dùng innerHTML chứ không textContent.
@@ -306,6 +376,8 @@
           "</s>" +
           discountedHtml
         : discountedHtml;
+
+    restoreBadges(el, badges);
 
     el.setAttribute("data-cp-variant", String(variant.id));
 
